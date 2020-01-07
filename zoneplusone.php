@@ -23,7 +23,11 @@ define("ZONES_DB_VERSION", "1.0");
 define("PLUS_ONE_ZONES_TABLE_NAME", $wpdb->prefix . "plus_one_zones");
 define("PLUS_ONE_ZONES_DB_VERSION", "1.0");
 
-$IFLZonePlusOne = new ZonePlusOne;
+/// Some day we might need some filesize management here.
+define("ZONEPLUSONE_LOGFOLDER", plugin_dir_path( __FILE__ ) . "logs/");
+define("ZONEPLUSONE_LOGFILE", ZONEPLUSONE_LOGFOLDER.'log.php');
+
+$IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
 
 Class IFLZonePlusOne
@@ -47,17 +51,16 @@ Class IFLZonePlusOne
         }
 
         add_menu_page(
-            __(
-                'Custom Menu Title', 'textdomain'),        // Page Title
-            'Plus One Zones',                         // Menu Title
-            'manage_options',                           // Required Capability
-            'my_custom_plus_one_zones_menu_page',                      // Menu Slug
-            $admin_page_call,                           // Function
-            plugins_url('myplugin/images/icon.png'),  // Icon URL
+            __('Zone +1 Admin', 'textdomain'),  // Page Title
+            'Zone +1',                          // Menu Title
+            'manage_options',                   // Required Capability
+            'plus_one_zones_menu_page',         // Menu Slug
+            $admin_page_call,                   // Function
+            plugin_dir_path( __FILE__ ).'plus-icon.svg',  // Icon URL
             6
         );
 
-        add_submenu_page('my_custom_plus_one_zones_menu_page',
+        add_submenu_page('plus_one_zones_menu_page',
             "Manage Zone Names",
             "Manage Zone Names",
             'manage_options',
@@ -69,18 +72,44 @@ Class IFLZonePlusOne
 
     public function admin_page_call() {
         // Echo the html here...
+        $zonedata = $this->get_zone_plus_ones_array_for_dashboard();
+        // pr($zonedata);
+        
+        echo '<table class="zonedata">
+                <tr>
+                    <th>Zone</th>
+                    <th>Total</th>
+                    <th>Monthly</th>
+                </tr>';
+
+        foreach ($zonedata as $key => $value) {
+            echo "<tr>";
+            echo "<td>".$value['zone_name']."</td>";
+            echo "<td>".$value['this_month_plus_one_count']."</td>";
+            echo "<td>".$value['total_plus_one_count']."</td>";
+            echo "</tr>";            
+        }
+
+        echo "</table>"; 
+
         echo "</br></br>TESTING!</br>";
 
-        $this->test_zone_tokens_table_stuff();
-        $this->test_zones_table_stuff();
-        $this->test_plus_one_zones_table_stuff();
+        // $this->test_zone_tokens_table_stuff();
+        // $this->test_zones_table_stuff();
+        // $this->test_plus_one_zones_table_stuff();
 
-        echo "</br>" . $this->get_zone_token_ids_by_user_id("3") . "</br>";
-        echo "</br>" . $this->get_user_id_from_zone_token_id("1") . "</br>";
+        // echo "</br>" . $this->get_zone_token_ids_by_user_id("3") . "</br>";
+        // echo "</br>" . $this->get_user_id_from_zone_token_id("1") . "</br>";
 
-        echo "</br>" . $this->add_zone_token_to_zone_tokens_table("1", "3") . "</br>";
-
-        echo "</br>" . $this->add_zone_to_zones_table("Electronics zone") . "</br>";
+        // Tests
+        $response = $this->add_zone_token_to_zone_tokens_table("1", "3");
+        if ( is_wp_error( $response ) ) {             
+            errout($response->get_error_messages());
+        } else {            
+            pr($response);
+        }
+        
+        // echo "</br>" . $this->add_zone_to_zones_table("Electronics zone") . "</br>";
 
     }
 
@@ -272,28 +301,34 @@ Class IFLZonePlusOne
     public function add_zone_token_to_zone_tokens_table($token_id, $user_id) {
         global $wpdb;
         if (!self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
-            return "Error - zone tokens table does not exist in database";
+            return new WP_Error('no-token-table',"Zone tokens table does not exist in database");
+            // return "Error - zone tokens table does not exist in database";
         }
         $token_id = trim($token_id);
         if ($token_id == "") {
-            return "Error - empty zone token ID";
+            return new WP_Error('no-token-id',"Empty zone token ID");
+            // return "Error - empty zone token ID";
         }
         $user_id = trim($user_id);
         if ($user_id == "") {
-            return "Error - empty user ID";
+            return new WP_Error('no-user-id',"Empty User ID");
+            // return "Error - empty user ID";
         }
 
         if (!self::is_user_id_in_database($user_id)) {
-            return "Error - user ID " . $user_id . " is not a registered user";
+            return new WP_Error('user-missing',"User ID " . $user_id . " is not a registered user");
+            // return "Error - user ID " . $user_id . " is not a registered user";
         }
 
         $result = $wpdb->get_results("SELECT * FROM " . ZONE_TOKENS_TABLE_NAME . " WHERE token_id = '" . $token_id . "'");
         if ($wpdb->num_rows != 0) {
             $user_id_already_registered = $result[0]->user_id;
             if ($user_id_already_registered != $user_id) {
-                return "Error - zone token ID " . $token_id . " is already registered to a different userID (" . $user_id_already_registered . ")";
+                return new WP_Error('user-mismatch',"Token ID " . $token_id . " is already registered to a different userID (" . $user_id_already_registered . ")");
+                // return "Error - zone token ID " . $token_id . " is already registered to a different userID (" . $user_id_already_registered . ")";
             }
-            return "Zone token ID " . $token_id . " is already registered to that user ID (" . $user_id . ")";
+            return new WP_Error('user-duplicate',"Token ID " . $token_id . " is already registered to that user ID (" . $user_id . ")");
+            // return "Zone token ID " . $token_id . " is already registered to that user ID (" . $user_id . ")";
         }
         $wpdb->insert(
             ZONE_TOKENS_TABLE_NAME,
@@ -306,7 +341,8 @@ Class IFLZonePlusOne
         if ($wpdb->num_rows != 0) {
             return "Zone token ID " . $token_id . " and user ID " . $user_id . " successfully added to the zone tokens table";
         } else {
-            return "Error adding zone token ID to the tokens table";
+            return new WP_Error('unknown-error',"Error adding zone token ID to the tokens table");
+            // return "Error adding zone token ID to the tokens table";
         }
     }
 
@@ -343,29 +379,37 @@ Class IFLZonePlusOne
     public function add_plus_one_to_plus_one_zones_table($zone_id, $token_id) {
         global $wpdb;
         if (!self::does_table_exist_in_database(ZONES_TABLE_NAME)) {
-            return "Error - zones table does not exist in database";
+            return new WP_Error('zone-table-missing',"Zones table does not exist in database");
+            // return "Error - zones table does not exist in database";
         }
 
         if (!self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
-            return "Error - zone tokens table does not exist in database";
+            return new WP_Error('token-table-missing',"Zone Tokens table does not exist in database");
+            // return "Error - zone tokens table does not exist in database";
         }
 
         if (!self::does_table_exist_in_database(PLUS_ONE_ZONES_TABLE_NAME)) {
-            return "Error - plus one zones table does not exist in database";
+            return new WP_Error('plusone-table-missing',"Plus One Zones table does not exist in database");
+            // return "Error - plus one zones table does not exist in database";
         }
 
         $result = $wpdb->get_results("SELECT * FROM " . ZONES_TABLE_NAME . " WHERE record_id = '" . $zone_id . "'");
         if ($wpdb->num_rows == 0) {
-            return "Error - zone ID " . $zone_id . " does not exist in the zones table";
+            return new WP_Error('zone-id-missing',"Zone ID " . $zone_id . " does not exist in the zones table");
+            // return "Error - zone ID " . $zone_id . " does not exist in the zones table";
         }
 
-        $user_id = $this->get_user_id_from_zone_token_id($token_id);
-        if (substr($user_id, 0, 5) === "Error") {
-            return $user_id;
+        $response = $this->get_user_id_from_zone_token_id($token_id);        
+        if (is_wp_error($response)) {
+            return $response;
+        } else {
+            $user_id = $response;
         }
+        // if (substr($user_id, 0, 5) === "Error") {}
 
         if ($this->user_already_plus_oned_this_zone_today($user_id, $zone_id)) {
-            return "Error - user " . $this->get_user_name_from_user_id($user_id) . " already plus-one'd the " . $this->get_zone_name_from_zone_id($zone_id) . " today";
+            return new WP_Error('quota-met',"User " . $this->get_user_name_from_user_id($user_id) . " already plus-one'd the " . $this->get_zone_name_from_zone_id($zone_id) . " today");
+            // return "Error - user " . $this->get_user_name_from_user_id($user_id) . " already plus-one'd the " . $this->get_zone_name_from_zone_id($zone_id) . " today";
         }
 
         // TODO get local time instead of forcing California time
@@ -386,7 +430,8 @@ Class IFLZonePlusOne
         if ($wpdb->num_rows != 0) {
             return $this->get_zone_name_from_zone_id($zone_id) . " plus one for user " . $this->get_user_name_from_user_id($user_id) . " successfully added to the plus one zones table";
         } else {
-            return "Error adding plus one to the plus one zones table";
+            return new WP_Error('unknown-error',"Error adding Plus One to the Plus One Zones table");
+            // return "Error adding plus one to the plus one zones table";
         }
     }
 
@@ -432,11 +477,14 @@ Class IFLZonePlusOne
         // otherwise returns an error message
         global $wpdb;
         if (!$this->does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
-            return "Error - zone tokens table does not exist in database";
+            return new WP_Error('token-table-missing',"Zone tokens table does not exist in database");
+            // return "Error - zone tokens table does not exist in database";
+
         }
         $result = $wpdb->get_results("SELECT user_id FROM " . ZONE_TOKENS_TABLE_NAME . " WHERE token_id = '" . $token_id . "'");
         if ($wpdb->num_rows == 0) {
-            return "Error - zone token id " . $token_id . " not found in database, you need to register it to a user ID";
+            return new WP_Error('unknown-token',"Zone token ID " . $token_id . " not found in database, you need to register it to a user ID");
+            // return "Error - zone token id " . $token_id . " not found in database, you need to register it to a user ID";
         } else {
             return $result[0]->user_id;
         }
@@ -537,7 +585,12 @@ Class IFLZonePlusOne
             $this->create_plus_one_zones_table();
         }
         //Add a plus-one
-        echo $this->add_plus_one_to_plus_one_zones_table(3, 1) . "<br>";
+        $response = $this->add_plus_one_to_plus_one_zones_table(3, 1);
+        if (is_wp_error($response)) {
+            $response->get_error_messages();
+        } else {
+            echo $response.'<br/>';
+        }        
     }
 
     public function get_total_plus_one_count_by_zone_id($zone_id) {
@@ -579,7 +632,64 @@ Class IFLZonePlusOne
         return $wpdb->num_rows != 0;
     }
 
+    public function log($item,$echo=0) {
+
+        if (!$this->check_log_file_exists()) return false;
+
+        if (is_array($item)) {
+            if (is_wp_error($item)) {
+                $message = $item->get_error_message();
+            } else {
+                $message = implode(", ", $item);
+            }            
+        } else {
+            $message = $item;
+        }
+
+        error_log($message,3,ZONEPLUSONE_LOGFILE);
+        if ($echo) echo $message; 
+    }
+
+    public function check_log_file_exists() {
+
+        // Permissions?
+        if (!file_exists(ZONEPLUSONE_LOGFOLDER)) {            
+            try {
+                mkdir(ZONEPLUSONE_LOGFOLDER);
+            } catch (Exception $e) {
+                error_log( $e->getMessage(), "\n");
+                return false;
+            }
+        }
+        if (!file_exists(ZONEPLUSONE_LOGFILE)) {                
+            try {
+                file_put_contents(ZONEPLUSONE_LOGFILE, '');
+            } catch (Exception $e) {
+                error_log( $e->getMessage(), "\n");
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
 
+function pr($input) {
+    echo '<pre>';
+    print_r($input);
+    echo '</pre>';   
+}
+function errout($errors) {
+    if (is_wp_error($errors)) {
+        echo '<ul class="errors">';
+        foreach ($errors as $error) {
+            echo '<li class="error-item">'.$error.'</li>';
+        }
+        echo '</ul>';
+    } else {
+        return;
+    }
 
-?>
+}
+
+ ?>
