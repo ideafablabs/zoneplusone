@@ -33,31 +33,7 @@ $(document).ready( function(){
 
     });
 
-    /* RETURN ATTENDEE LIST */
-
-    // SORT
-    var attendees = $('.member_select_list'),
-    attendeesli = attendees.children('li');
-
-    attendeesli.sort(function(a,b){
-        var an = a.getAttribute('data-sort').toLowerCase(),
-            bn = b.getAttribute('data-sort').toLowerCase();
-
-        if(an > bn) {
-            return 1;
-        }
-        if(an < bn) {
-            return -1;
-        }
-        return 0;
-    });
-
-    // Hide Members List
-    $(".member_select_list").hide(); //Debug: show all the members. 
-
-    attendeesli.detach().appendTo(attendees);
-
-    console.log("Plugin Active");
+    console.log("Plugin Active"); ///
 
     $('a.admit-button').on('click', function(e) { 
         
@@ -104,11 +80,7 @@ $(document).ready( function(){
         // jQuery(this).hide();            
     });     
 
-    // Clear search / hide attendee list.
-    $('.clear-search').on('click', function(e) { 
-        // document.getElementById('q').value = '';
-        $(".member_select_list").hide(); //Debug: show all the members. 
-    });
+    
 
     $('a.admit-all').on('click', function(e) { 
         
@@ -141,43 +113,7 @@ $(document).ready( function(){
     });
 
 
-
-    // Sort list function.
-    function sortUnorderedList(ul, sortDescending) {
-        if(typeof ul == "string")
-            ul = document.getElementById(ul);
-
-        // Idiot-proof, remove if you want
-        if(!ul) {
-            alert("The UL object is null!");
-            return;
-        }
-
-        // Get the list items and setup an array for sorting
-        var lis = ul.getElementsByTagName("LI");
-        var vals = [];
-
-        // Populate the array
-        for(var i = 0, l = lis.length; i < l; i++)
-            vals.push(lis[i].innerHTML);
-
-        // Sort it
-        vals.sort();
-
-        // Sometimes you gotta DESC
-        if(sortDescending)
-            vals.reverse();
-
-        // Change the list on the page
-        for(var i = 0, l = lis.length; i < l; i++)
-            lis[i].innerHTML = vals[i];
-    }
-
-
-// /
-
-
-/*
+    /*
     This makes an instant search for the gallery member sign-in list
         @jordan
     */
@@ -202,7 +138,7 @@ $(document).ready( function(){
             var searchTerm = $(".member_select_search #q").val();
 
             //then a variable for the list-items (to keep things clean)
-            var listItem = $('.member_select_list').children('li');
+            var listItem = $('.member_select_list').children('tr');
             
             //extends the default :contains functionality to be case insensitive
             //if you want case sensitive search, just remove this next chunk
@@ -222,7 +158,7 @@ $(document).ready( function(){
             
             
             //here is the meat. We are searching the list based on the search terms
-            $(".member_select_list li").not(":containsi('" + searchSplit + "')").each(function(e)   {
+            $(".member_select_list tr").not(":containsi('" + searchSplit + "')").each(function(e)   {
 
                   //add a "hidden" class that will remove the item from the list
                   $(this).addClass('hidden');
@@ -230,7 +166,7 @@ $(document).ready( function(){
             });
             
             //this does the opposite -- brings items back into view
-            $(".member_select_list li:containsi('" + searchSplit + "')").each(function(e) {
+            $(".member_select_list tr:containsi('" + searchSplit + "')").each(function(e) {
 
                   //remove the hidden class (reintroduce the item to the list)
                   $(this).removeClass('hidden');
@@ -239,7 +175,7 @@ $(document).ready( function(){
 
             // SORT
             var attendees = $('.member_select_list'),
-            attendeesli = attendees.children('li');
+            attendeesli = attendees.children('tr');
 
             attendeesli.sort(function(a,b){
                 var an = a.getAttribute('data-sort').toLowerCase(),
@@ -267,6 +203,12 @@ $(document).ready( function(){
         reader_id = $(".nfc_button").attr('data-reader_id');        
         setTimeout(ajax_get_token_id_from_reader(reader_id),3000);
     }
+
+    // Clear search / hide attendee list.
+    $('.clear-search').on('click', function(e) { 
+        // document.getElementById('q').value = '';
+        $(".member_select_list tr").show(); //Debug: show all the members. 
+    });
 
 });
 

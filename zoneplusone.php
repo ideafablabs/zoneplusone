@@ -45,9 +45,9 @@ Class IFLZonePlusOne
         });
 
         // Enqueue plugin styles and scripts
-        add_action('wp_enqueue_script', array($this, 'register_iflzpo_scripts'));
-        add_action('wp_enqueue_script', array($this, 'enqueue_iflzpo_scripts'));
-        add_action('wp_enqueue_style', array($this, 'enqueue_iflzpo_styles'));
+        add_action('admin_enqueue_scripts', array($this, 'register_iflzpo_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_iflzpo_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_iflzpo_styles'));
     }
 
     public function wpdocs_register_my_custom_menu_page() {
@@ -78,7 +78,7 @@ Class IFLZonePlusOne
             'manage_options',
             "manage_user_tokens_page",
             array($this, 'manage_user_tokens_page_call'));
-}
+
         add_submenu_page('plus_one_zones_menu_page',
             "Assign token to user",
             "Assign token to user",
@@ -131,34 +131,91 @@ Class IFLZonePlusOne
     }
 
     public function manage_user_tokens_page_call() { 
+        $page_name = 'manage_user_tokens_page';
 
-        // Get the users from the DB...
-        $users = get_users(array('orderby' => 'display_name', 'fields' => 'all_with_meta'));
+        $response = ""; // Begin output.
+        /// We really should switch to templates.
+        
+        $member_class = ""; /// ?
+        
+        $user_id = (isset($_GET['user_id'])) ? $_GET['user_id'] : "";
+        $reader_id = (isset($_GET['reader_id'])) ? $_GET['reader_id'] : "";
 
-        $response = "";
-        $member_class = "";
-        $reader_id = "";
+        if (empty($user_id)) {
 
-        // Build search HTML.
-        $response .= '<div class="member_select_search"><span class="glyphicon glyphicon-user"></span><input type="text" name="q" value="" placeholder="Search for a member..." id="q"><button  class="clear-search" onclick="document.getElementById(\'q\').value = \'\';$(\'.member_select_search #q\').focus();">X</button></div>';
+            // Get the users from the DB...
+            $users = get_users(array('orderby' => 'display_name', 'fields' => 'all_with_meta'));
 
-        // Build list HTML
-        $response .= '<ul class="member_select_list list-group">';
+            // Build search HTML.
+            $response .= '<div class="member_select_search"><span class="glyphicon glyphicon-user"></span><input type="text" name="q" value="" placeholder="Search for a member..." id="q"><button  class="clear-search" onclick="document.getElementById(\'q\').value = \'\';$(\'.member_select_search #q\').focus();">Clear</button></div>';
 
-        // Build links for each member...
-        foreach ($users as $key => $user) {
+            // Build list HTML
+            // $response .= '<ul class="member_select_list list-group">';
+            $response .= '<table class="member_select_list list-group">';
+            $response .= '<tr class="member_select_list_head">
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Tokens</th>
+                            <th>Add</th>';
 
-            $formlink = './?user_email=' . $user->user_email . '&membername=' . urlencode($user->display_name) . '&reader_id=' . $reader_id;
+            // Build links for each member...
+            foreach ($users as $key => $user) {
 
-            $response .= '<li class="list-group-item list-group-item-action" data-sort="' . $user->display_name . '">
-            <span class="glyphicon glyphicon-user"></span>
-            <a id="' . $user->ID . '" class=" ' . $member_class . '" href="' . $formlink . '">
-            <span class="member-displayname">' . $user->display_name . '</span>
-            <br /><span class="member-email">' . $user->user_email . '</span></a>
-            </li>';
+                // $formlink = '/wp-admin/admin.php?page='.$page_name.'&user_id=' . $user->ID . '&reader_id=' . $reader_id;
+
+                $query = array(
+                    'user_id' => $user->ID,                     
+                );
+                $formlink = esc_url( add_query_arg( $query ) );
+
+                
+                ///DUMMY ADD TOKENS
+                // $res = $this->add_zone_token_to_zone_tokens_table(rand(20,10000),$user->ID);
+
+                // get users tokens array
+                $tokens = $this->get_zone_token_ids_by_user_id($user->ID);
+               
+                $response .= '<tr class="" data-sort="' . $user->display_name . '">
+                    <td class="user-displayname">'.$user->display_name.'</td>
+                    <td class="user-email">'. $user->user_email.'</td>
+                    <td class="user-tokens">'; 
+                    if (is_array($tokens)) {
+                        $response .= '<ul>';
+                        foreach ($tokens as $key => $token_id) {
+                            $response.= '<li>'.$token_id.'</li>';   
+                        }
+                        $response .= '</ul>';
+                    } else {
+                        $response.= '<span>'.$tokens.'</span>';   
+                    }
+                    $response .= '</td>
+                    <td><a>Add recent token</a></td>
+
+
+                    </tr>';
+
+                // $response .= '<li class="list-group-item list-group-item-action" data-sort="' . $user->display_name . '">
+                // <span class="glyphicon glyphicon-user"></span>
+                // <a id="' . $user->ID . '" class=" ' . $member_class . '" href="' . $formlink . '">
+                // <span class="member-displayname">' . $user->display_name . '</span>
+                // <br /><span class="member-email">' . $user->user_email . '</span></a>
+                // </li>';
+            }
+            $response .= '</table>';
+            // $response .= '</ul>';
+
+        } else {            
+
+            //  We have the user ID so let's show the page where we associate the NFC Token
+            $user = get_user_by('ID', $user_id);
+            $token_id = get_option('token_id');
+            $associate_link = '';
+
+            $response .= '<h2>'.$user->display_name.'</h2>';
+            $response .= '<p>Current Token ID:'.$token_id.'</p>';
+            $response .= '<p><a href="'.$associate_link.'" title="Associate">Associate this Token with '.$user->display_name.'</a></p>';
+
         }
-
-        $response .= '</ul>';
         echo $response;
 
     }
@@ -772,7 +829,7 @@ Class IFLZonePlusOne
      * Enqueues plugin-specific styles.
      */
     public function enqueue_iflzpo_styles() {
-        wp_enqueue_style('iflzpo-style');
+        wp_enqueue_style('iflzpo-style');        
     }
 
 }
