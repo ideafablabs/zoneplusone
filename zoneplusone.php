@@ -43,6 +43,11 @@ Class IFLZonePlusOne
             $zoneplusone_controller = new ZonePlusOne_Controller();
             $zoneplusone_controller->register_routes();
         });
+
+        // Enqueue plugin styles and scripts
+        add_action('wp_enqueue_script', array($this, 'register_iflzpo_scripts'));
+        add_action('wp_enqueue_script', array($this, 'enqueue_iflzpo_scripts'));
+        add_action('wp_enqueue_style', array($this, 'enqueue_iflzpo_styles'));
     }
 
     public function wpdocs_register_my_custom_menu_page() {
@@ -58,7 +63,7 @@ Class IFLZonePlusOne
             $admin_page_call,                   // Function
             plugin_dir_path( __FILE__ ).'plus-icon.svg',  // Icon URL
             6
-        );
+        ); 
 
         add_submenu_page('plus_one_zones_menu_page',
             "Manage Zone Names",
@@ -66,6 +71,13 @@ Class IFLZonePlusOne
             'manage_options',
             "manage_zone_names_page",
             array($this, 'manage_zone_names_page_call'));
+
+        add_submenu_page('plus_one_zones_menu_page',
+            "Manage User Tokens",
+            "Manage User Tokens",
+            'manage_options',
+            "manage_user_tokens_page",
+            array($this, 'manage_user_tokens_page_call'));
 
 
     }
@@ -112,6 +124,40 @@ Class IFLZonePlusOne
         // echo "</br>" . $this->add_zone_to_zones_table("Electronics zone") . "</br>";
 
     }
+
+    public function manage_user_tokens_page_call() { 
+
+        // Get the users from the DB...
+        $users = get_users(array('orderby' => 'display_name', 'fields' => 'all_with_meta'));
+
+        $response = "";
+        $member_class = "";
+        $reader_id = "";
+
+        // Build search HTML.
+        $response .= '<div class="member_select_search"><span class="glyphicon glyphicon-user"></span><input type="text" name="q" value="" placeholder="Search for a member..." id="q"><button  class="clear-search" onclick="document.getElementById(\'q\').value = \'\';$(\'.member_select_search #q\').focus();">X</button></div>';
+
+        // Build list HTML
+        $response .= '<ul class="member_select_list list-group">';
+
+        // Build links for each member...
+        foreach ($users as $key => $user) {
+
+            $formlink = './?user_email=' . $user->user_email . '&membername=' . urlencode($user->display_name) . '&reader_id=' . $reader_id;
+
+            $response .= '<li class="list-group-item list-group-item-action" data-sort="' . $user->display_name . '">
+            <span class="glyphicon glyphicon-user"></span>
+            <a id="' . $user->ID . '" class=" ' . $member_class . '" href="' . $formlink . '">
+            <span class="member-displayname">' . $user->display_name . '</span>
+            <br /><span class="member-email">' . $user->user_email . '</span></a>
+            </li>';
+        }
+
+        $response .= '</ul>';
+        echo $response;
+
+    }
+
 
     public function manage_zone_names_page_call() {
         $emptyNameEntered = false;
@@ -670,6 +716,29 @@ Class IFLZonePlusOne
             }
         }
         return true;
+    }
+
+    /**
+     * Register plugin styles and scripts
+     */
+    public function register_iflzpo_scripts() {
+        wp_register_script('iflzpo-script', plugins_url('js/iflzpo.js', __FILE__), array('jquery'), null, true);
+        wp_register_style('iflzpo-style', plugins_url('css/iflzpo.css', __FILE__));
+    }
+
+    /**
+     * Enqueues plugin-specific scripts.
+     */
+    public function enqueue_iflzpo_scripts() {
+        wp_enqueue_script('iflzpo-script');
+        wp_localize_script('iflzpo-script', 'iflzpo_ajax', array('ajax_url' => admin_url('admin-ajax.php'), 'check_nonce' => wp_create_nonce('iflzpo-nonce')));
+    }
+
+    /**
+     * Enqueues plugin-specific styles.
+     */
+    public function enqueue_iflzpo_styles() {
+        wp_enqueue_style('iflzpo-style');
     }
 
 }
