@@ -72,83 +72,104 @@ a.admitted {
 	color:red;
 }
 
+/* Gallery Member Select Styles */
+.member_select_search {
+	height: 5em;
+	display: block;
+	/*position: absolute;*/
+	/*top:10px;*/
+}
+.member_select_search #q {
+	font-size:2em;
+	margin-bottom:1.1em;
+	padding:10px;
+	height:2em;
+	width:80%;
+	float: left;
+}
+.member_select_search .clear-search {
+	font-size:2em;
+	width:18%;
+	margin-left:6px;
+	height: 2em;
+	float: left;
+	background: #1D8CB5;
+}
 /*.nfc-wrapper*/
+
+table.member_select_list {
+	width:100%;
+	border-bottom:1px solid #000;
+}
+table.member_select_list tr {
+	
+}
+table.member_select_list tr:nth-child(odd) {
+	background: #DDD;
+}
+table.member_select_list th {
+	font-weight: bold;	
+	border-bottom:1px solid #999;
+}
+table.member_select_list td,th {
+	vertical-align: middle;
+	padding:.6em;
+	border: 0
+}
+
 
 /*//// OLD STYLES /////*/
 
-	/* Gallery Member Select Styles */
-	.member_select_search {
-		height: 5em;
-		display: block;
-		/*position: absolute;*/
-		/*top:10px;*/
-	}
-	.member_select_search #q {
-		font-size:2em;
-		margin-bottom:1.1em;
-		padding:10px;
-		height:2em;
-		width:80%;
-		float: left;
-	}
-	.member_select_search .clear-search {
-		font-size:2em;
-		width:18%;
-		margin-left:6px;
-		height: 2em;
-		float: left;
-		background: #1D8CB5;
-	}
-	ul.member_select_list {
-		list-style-type:none;
-		margin-left:0;
-	}
-	ul.member_select_list li {
-		margin-bottom:.8em;
+ul.member_select_list {
+	list-style-type:none;
+	margin-left:0;
+}
+ul.member_select_list li {
+	margin-bottom:.8em;
 /*		height:2em;*/
-	}
-	ul.member_select_list li.hidden { 
-		display:none;
-	}
-	ul.member_select_list li a.mm-button {
-		font-size:1.9em;
-		width:100%;
-		overflow:hidden;
-	}
-	ul.member_select_list li a .member-displayname {}
-	ul.member_select_list li a .member-email {
-		color:#444;
-		font-size:.5em;
+}
+ul.member_select_list li.hidden { 
+	display:none;
+}
+ul.member_select_list li a.mm-button {
+	font-size:1.9em;
+	width:100%;
+	overflow:hidden;
+}
+ul.member_select_list li a .member-displayname {}
+ul.member_select_list li a .member-email {
+	color:#444;
+	font-size:.5em;
 /*		width:10em;	*/
-		white-space:nowrap;
-	}
-	a.mm-button.new-signup {
-		font-size:2em;
+	white-space:nowrap;
+}
+a.mm-button.new-signup {
+	font-size:2em;
 /*		padding:10px 20px 0;*/
 /*		height:4em;*/
-		margin:0 .1em;
-		text-align:center;
-	}
-	a.mm-button.new-signup img {
-		-webkit-opacity:.7;
-		opacity:.7;
-		width:14%;
-		
-	}
-	a.mm-button.new-signup span{
-		margin-right:10px;
-	}
-	.green-text {
-		color:#009300;
-	}
-	.red-text {
-		color:#E10012;
-	}
-	.app-sidebar {
-		position: fixed !important; 
-		left:51%;
-		/*bottom:40px;*/
-	}
+	margin:0 .1em;
+	text-align:center;
+}
+a.mm-button.new-signup img {
+	-webkit-opacity:.7;
+	opacity:.7;
+	width:14%;
+	
+}
+a.mm-button.new-signup span{
+	margin-right:10px;
+}
+.green-text {
+	color:#009300;
+}
+.red-text {
+	color:#E10012;
+}
+.app-sidebar {
+	position: fixed !important; 
+	left:51%;
+	/*bottom:40px;*/
+}
 
 
 

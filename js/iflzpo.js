@@ -4,141 +4,44 @@ $(document).ready( function(){
 
     // console.log(iflzpo_ajax.ajax_url);
     $(".add-button").click(function(e) {
-        
         e.preventDefault();
+        
+        var uid = jQuery(this).data( 'uid' );        
+        
+        package = {
+            request : 'add_token',
+            data : {
+                uid : uid
+            }
+        }
 
-        // console.log("Clicked!");
-        // console.log(iflzpo_ajax);
+        package.success = function(response) {
+            console.log("response");
+        }
+        ajaxRequest(package);
+        
+    });
 
-        var uid = jQuery(this).data( 'uid' );
-        // console.log(uid);
-        // var uid = 4000;
-
-        jQuery.ajax({
+    function ajaxRequest(package) {
+        
+        $.ajax({
             url : iflzpo_ajax.ajaxurl,
             type : 'post',
             data : {
-                action : 'iflzpo_associate_last_token_with_user_id',
-                // action : 'ifl_sanity_check',
+                action : 'async_controller',                
                 security : iflzpo_ajax.check_nonce, 
-                user_id : uid
+                request : package.request,
+                package : package.data
             },
-            success : function( response ) {
-                console.log("Successes!");
+            success : function( response ) {                
                 console.log(response);
-                // jQuery('.rml_contents').html(response);
+                package.success(response);
             },
             error : function(jqXHR, textStatus, errorThrown) {
                 console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
             }
         });
-    });
-    /* REGISTRATION FORM */
-    $('button.get_token_id').click(function(){
-
-        // get reader id
-        reader_id = 1;
-        reader_value = 0;
-        url = "https://mint.ideafablabs.com/index.php/wp-json/mint/v1/readers/"+reader_id;
-        // get reader value.
-        $.get(url,function(data,status) {
-            console.log(`${data}`);
-            // reader_value = data.reader;
-            $("#nfcid").val(data);
-        });
-        // 
-
-        
-
-        // if (reader_value != ) {
-
-            // get form field.
-            
-
-        // }
-
-    });
-
-    console.log("Plugin Active"); ///
-
-    $('a.admit-button').on('click', function(e) { 
-        
-        e.preventDefault();
-        console.log("Admitting Attendee...");
-        $(e.target).addClass('admitting');
-                
-        //TODO Add loading graphic 
-
-        // var iflag_entry_id = jQuery(this).data( 'id' );    
-
-        $.ajax({
-            url : iflpm_ajax.ajax_url,
-            type : 'post',
-            data : {
-                action : 'ifl_admit_guest',
-                entry_id : $(this).data( 'entry' ) ,
-                attendee_id : $(this).data( 'attendee' )
-            },
-            // security : iflpm_ajax.check_nonce,
-            success : function( response ) {
-                console.log("Success!");
-                console.log(response);
-                $(e.target).addClass('admitted');
-                // jQuery('.iflag_contents').html(response);
-            }
-        });
-    /*
-        $.ajax({
-            url : iflpm_ajax.ajax_url,
-            type : 'post',
-            data : {
-                action : 'ifl_sanity_check'
-                // entry_id : $(this).data( 'entry' ) ,
-                // attended_id : $(this).data( 'attended' )
-            },
-            // security : iflpm_ajax.check_nonce,
-            success : function( response ) {
-                console.log("Success!");
-                console.log(response);                
-            }
-        });*/
-        
-        // jQuery(this).hide();            
-    });     
-
-    
-
-    $('a.admit-all').on('click', function(e) { 
-        
-        e.preventDefault();
-        console.log("Admitting All Attendees...");
-        $(e.target).addClass('admitting');
-                
-        //TODO Add loading graphic 
-
-        // var iflag_entry_id = jQuery(this).data( 'id' );    
-        
-        $.ajax({
-            url : iflpm_ajax.ajax_url,
-            type : 'post',
-            data : {
-                action : 'ifl_admit_all',
-                entry_id : $(this).data( 'entry' ) ,
-                // attended_id : $(this).data( 'attended' )
-            },
-            // security : iflpm_ajax.check_nonce,
-            success : function( response ) {
-                console.log("Success!");
-                console.log(response);
-                $(e.target).parent('div').children('.admit-button').addClass('admitted');
-                // jQuery('.iflag_contents').html(response);
-            }
-        });
-        
-        // jQuery(this).hide();            
-    });
-
-
+    }
     /*
     This makes an instant search for the gallery member sign-in list
         @jordan

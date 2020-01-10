@@ -53,6 +53,9 @@ Class IFLZonePlusOne
         add_action('wp_ajax_ifl_sanity_check', array($this, 'ifl_sanity_check'));
         add_action('wp_ajax_nopriv_ifl_sanity_check', array($this, 'ifl_sanity_check'));
 
+        add_action('wp_ajax_async_controller', array($this, 'async_controller'));
+        add_action('wp_ajax_nopriv_async_controller', array($this, 'async_controller'));
+
         add_action('wp_ajax_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
         add_action('wp_ajax_nopriv_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
     }
@@ -79,7 +82,60 @@ Class IFLZonePlusOne
         }
 
         // Always die in functions echoing Ajax content.
+        // wp_die(array('a' => 'b', 'b'=> 'c'));
         wp_die($return);
+    }
+
+    public function async_controller() { 
+        // switch on 'request' post var
+        $request = (!empty($_POST['request'])) ? $_POST['request'] : false;
+        $return['success'] = false;
+
+        switch ($request) {
+            case 'add_token':
+                // Get the User ID from the AJAX request.
+                $user_id = (!empty($_POST['user_id'])) ? $_POST['user_id'] : false;
+                
+                // If not there, fail.
+                if ($user_id === false) {
+                    $return['message'] = "No user ID Found";
+                    break;
+                } 
+
+                // Get the latest stored token from WP options table..
+                $token_id = get_option('token_id');
+
+                // Try and add to token table.
+                /// this should be a try{}...
+                $response = $this->add_zone_token_to_zone_tokens_table($token_id,$user_id);
+
+                // Did we fail?
+                if (is_wp_error($response)) {
+                    $return['message'] = $response->get_error_message();
+                } else {
+                    $return['success'] = true;
+                    $return['token_id'] = $token_id;
+                    $return['message'] = $response;
+                }
+
+                break;
+            
+            default:
+                // err out                
+                $return['message'] = "Bad request object";
+                
+                break;
+        }
+        // Get the User ID from the AJAX request.
+        
+
+        // error or successeed 
+
+        // echo json
+        echo json_encode($return);
+
+        // always wp_die()
+        wp_die();
     }
 
     public function ifl_sanity_check() {
@@ -191,7 +247,7 @@ Class IFLZonePlusOne
 
             // Build list HTML
             // $response .= '<ul class="member_select_list list-group">';
-            $response .= '<table class="member_select_list list-group">';
+            $response .= '<table border="0" class="member_select_list list-group">';
             $response .= '<tr class="member_select_list_head">
                             <th>Name</th>
                             <th>Email</th>
@@ -207,12 +263,11 @@ Class IFLZonePlusOne
                     'user_id' => $user->ID,                     
                 );
                 $formlink = esc_url( add_query_arg( $query ) );
-
-                
+ 
                 ///DUMMY ADD TOKENS
                 // $res = $this->add_zone_token_to_zone_tokens_table(rand(20,10000),$user->ID);
 
-                // get users tokens array
+                // Get users tokens array.
                 $tokens = $this->get_zone_token_ids_by_user_id($user->ID);
                
                 $response .= '<tr class="" data-sort="' . $user->display_name . '">
@@ -701,9 +756,15 @@ Class IFLZonePlusOne
         if ($wpdb->num_rows == 0) {
             return "Error - no zone tokens found for user ID " . $user_id;
         } else {
-            return join(", ", array_map(function ($token) {
+            // return $result;
+            // pr($result);
+            return array_map(function ($token) {
                 return $token->token_id;
-            }, $result));
+            }, $result);
+            
+            // return join(", ", array_map(function ($token) {
+            //     return $token->token_id;
+            // }, $result));
         }
     }
 
