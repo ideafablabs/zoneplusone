@@ -1,12 +1,38 @@
 var $ = jQuery.noConflict();
 
 $(document).ready( function(){
-    
 
-    // $('.nfc-wrapper').insertAfter($(('#input_1_14')));
+    // console.log(iflzpo_ajax.ajax_url);
+    $(".add-button").click(function(e) {
+        
+        e.preventDefault();
 
-    // console.log("tetstetsetets");
+        // console.log("Clicked!");
+        // console.log(iflzpo_ajax);
 
+        var uid = jQuery(this).data( 'uid' );
+        // console.log(uid);
+        // var uid = 4000;
+
+        jQuery.ajax({
+            url : iflzpo_ajax.ajaxurl,
+            type : 'post',
+            data : {
+                action : 'iflzpo_associate_last_token_with_user_id',
+                // action : 'ifl_sanity_check',
+                security : iflzpo_ajax.check_nonce, 
+                user_id : uid
+            },
+            success : function( response ) {
+                console.log("Successes!");
+                console.log(response);
+                // jQuery('.rml_contents').html(response);
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
+            }
+        });
+    });
     /* REGISTRATION FORM */
     $('button.get_token_id').click(function(){
 

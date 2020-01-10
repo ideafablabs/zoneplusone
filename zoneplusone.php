@@ -48,7 +48,47 @@ Class IFLZonePlusOne
         add_action('admin_enqueue_scripts', array($this, 'register_iflzpo_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_iflzpo_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_iflzpo_styles'));
+
+        // AJAX Actions
+        add_action('wp_ajax_ifl_sanity_check', array($this, 'ifl_sanity_check'));
+        add_action('wp_ajax_nopriv_ifl_sanity_check', array($this, 'ifl_sanity_check'));
+
+        add_action('wp_ajax_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
+        add_action('wp_ajax_nopriv_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
     }
+
+    public function iflzpo_associate_last_token_with_user_id() {
+        
+        // Get the User ID from the AJAX request.
+        $user_id = (!empty($_POST['user_id'])) ? $_POST['user_id'] : false;
+        
+        // If not there, fail.
+        if ($user_id === false) die("No user ID Found");
+
+        // Get the latest stored token from WP options table..
+        $token_id = get_option('token_id');        
+
+        // Try and add to token table.
+        $response = $this->add_zone_token_to_zone_tokens_table($token_id,$user_id);
+
+        // Did we fail?
+        if (is_wp_error($response)) {
+            $return = $response->get_error_message();            
+        } else {
+            $return = $response;            
+        }
+
+        // Always die in functions echoing Ajax content.
+        wp_die($return);
+    }
+
+    public function ifl_sanity_check() {
+
+        // echo "Sane?";
+        
+        // Always die in functions echoing Ajax content
+        wp_die('Sane?');
+     }
 
     public function wpdocs_register_my_custom_menu_page() {
         if (!isset($admin_page_call) || $admin_page_call == '') {
@@ -189,7 +229,7 @@ Class IFLZonePlusOne
                         $response.= '<span>'.$tokens.'</span>';   
                     }
                     $response .= '</td>
-                    <td><a>Add recent token</a></td>
+                    <td><a class="add-button" data-uid="'.$user->ID.'">Add recent token</a></td>
 
 
                     </tr>';
@@ -822,7 +862,12 @@ Class IFLZonePlusOne
      */
     public function enqueue_iflzpo_scripts() {
         wp_enqueue_script('iflzpo-script');
-        wp_localize_script('iflzpo-script', 'iflzpo_ajax', array('ajax_url' => admin_url('admin-ajax.php'), 'check_nonce' => wp_create_nonce('iflzpo-nonce')));
+        
+        // AJAX URL Localization
+        wp_localize_script('iflzpo-script', 'iflzpo_ajax', array(
+            'ajaxurl' => admin_url('admin-ajax.php'), 
+            'check_nonce' => wp_create_nonce('iflzpo-nonce'))
+        );
     }
 
     /**
