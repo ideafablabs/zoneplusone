@@ -6,8 +6,10 @@ $(document).ready( function(){
     $(".add-button").click(function(e) {
         e.preventDefault();
         
+        // Get the relevant data.
         var uid = jQuery(this).data( 'uid' );        
         
+        // Bundle the package.
         package = {
             request : 'add_token',
             data : {
@@ -15,15 +17,36 @@ $(document).ready( function(){
             }
         }
 
+        // Forsee outcomes.
         package.success = function(response) {
-            console.log("response");
+            
+            // Actual success.
+            if (response.success == true) {
+                console.log("true");
+                var message = '<p class="ajax-success">'+response.message+'</p>';
+                var newtoken = "<li>"+response.token_id+"</li>";
+                // $(".ajax-message").append(newtoken);
+                // console.log(html);
+
+            // Or failure.
+            } else {                
+                console.log("outcome failed");
+                var message = '<p class="ajax-error">'+response.message+'</p>';
+                // console.log(response);
+            }
+
+            // Give some sort of affirmation...
+            $(".ajax-message").html(message);
+            
         }
+
+        // Send the package ==>
         ajaxRequest(package);
         
     });
 
     function ajaxRequest(package) {
-        
+
         $.ajax({
             url : iflzpo_ajax.ajaxurl,
             type : 'post',
@@ -33,8 +56,9 @@ $(document).ready( function(){
                 request : package.request,
                 package : package.data
             },
-            success : function( response ) {                
-                console.log(response);
+            success : function( json ) {                
+                // console.log(json);
+                var response = JSON.parse(json);
                 package.success(response);
             },
             error : function(jqXHR, textStatus, errorThrown) {

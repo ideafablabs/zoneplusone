@@ -84,17 +84,27 @@ Class IFLZonePlusOne
         // Always die in functions echoing Ajax content.
         // wp_die(array('a' => 'b', 'b'=> 'c'));
         wp_die($return);
-    }
+    }    
 
+    // Async Controller
+    // https://stackoverflow.com/questions/17982078/returning-json-data-with-ajax-in-wordpress
     public function async_controller() { 
-        // switch on 'request' post var
+
+        // Switch on 'request' post var
         $request = (!empty($_POST['request'])) ? $_POST['request'] : false;
+        $package = (!empty($_POST['package'])) ? $_POST['package'] : false;
         $return['success'] = false;
 
+        // echo $_POST['package'];
+        // echo json_encode($_POST);
+        // print_r($package['uid']);
+        // wp_die();
+        
         switch ($request) {
             case 'add_token':
+                
                 // Get the User ID from the AJAX request.
-                $user_id = (!empty($_POST['user_id'])) ? $_POST['user_id'] : false;
+                $user_id = (!empty($package['uid'])) ? $package['uid'] : false;
                 
                 // If not there, fail.
                 if ($user_id === false) {
@@ -103,11 +113,13 @@ Class IFLZonePlusOne
                 } 
 
                 // Get the latest stored token from WP options table..
-                $token_id = get_option('token_id');
+                // $token_id = get_option('token_id');
+                $token_id = rand(10000,90000); ///
 
                 // Try and add to token table.
                 /// this should be a try{}...
                 $response = $this->add_zone_token_to_zone_tokens_table($token_id,$user_id);
+                // $response = "zing";
 
                 // Did we fail?
                 if (is_wp_error($response)) {
@@ -119,22 +131,44 @@ Class IFLZonePlusOne
                 }
 
                 break;
-            
+            case 'remove_token':
+                // Get the User ID from the AJAX request.
+                $token_id = (!empty($package['token_id'])) ? $package['token_id'] : false;
+                
+                // If not there, fail.
+                if ($token_id === false) {
+                    $return['message'] = "No Token ID Found";
+                    break;
+                } 
+
+                // Check if zone token id is in zone tokens table.
+                // $token_id = ('token_id');
+
+                // Try and add to token table.
+                /// this should be a try{}...
+                // $response = $this->remove_zone_token_from_zone_tokens_table($token_id);
+                $response = "";///
+
+                // Did we fail?
+                if (is_wp_error($response)) {
+                    $return['message'] = $response->get_error_message();
+                } else {
+                    $return['success'] = true;
+                    $return['token_id'] = $token_id;
+                    $return['message'] = $response;
+                }
+
+                break;
             default:
                 // err out                
-                $return['message'] = "Bad request object";
-                
+                $return['message'] = "Bad request object";                
                 break;
         }
-        // Get the User ID from the AJAX request.
-        
 
-        // error or successeed 
-
-        // echo json
+        // Wrap our return response. 
         echo json_encode($return);
 
-        // always wp_die()
+        // Always wp_die().
         wp_die();
     }
 
@@ -143,7 +177,7 @@ Class IFLZonePlusOne
         // echo "Sane?";
         
         // Always die in functions echoing Ajax content
-        wp_die('Sane?');
+        wp_die('Sane!');
      }
 
     public function wpdocs_register_my_custom_menu_page() {
@@ -245,6 +279,8 @@ Class IFLZonePlusOne
             // Build search HTML.
             $response .= '<div class="member_select_search"><span class="glyphicon glyphicon-user"></span><input type="text" name="q" value="" placeholder="Search for a member..." id="q"><button  class="clear-search" onclick="document.getElementById(\'q\').value = \'\';$(\'.member_select_search #q\').focus();">Clear</button></div>';
 
+            $response .= '<div class="ajax-message"></div>';
+
             // Build list HTML
             // $response .= '<ul class="member_select_list list-group">';
             $response .= '<table border="0" class="member_select_list list-group">';
@@ -270,7 +306,7 @@ Class IFLZonePlusOne
                 // Get users tokens array.
                 $tokens = $this->get_zone_token_ids_by_user_id($user->ID);
                
-                $response .= '<tr class="" data-sort="' . $user->display_name . '">
+                $response .= '<tr class="" data-user-id="'.$user->ID.'" data-sort="' . $user->display_name . '">
                     <td class="user-displayname">'.$user->display_name.'</td>
                     <td class="user-email">'. $user->user_email.'</td>
                     <td class="user-tokens">'; 
@@ -285,7 +321,6 @@ Class IFLZonePlusOne
                     }
                     $response .= '</td>
                     <td><a class="add-button" data-uid="'.$user->ID.'">Add recent token</a></td>
-
 
                     </tr>';
 
