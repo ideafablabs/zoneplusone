@@ -25,7 +25,7 @@ define("PLUS_ONE_ZONES_DB_VERSION", "1.0");
 
 /// Some day we might need some filesize management here.
 define("ZONEPLUSONE_LOGFOLDER", plugin_dir_path(__FILE__) . "logs/");
-define("ZONEPLUSONE_LOGFILE", ZONEPLUSONE_LOGFOLDER . 'log.php');
+define("ZONEPLUSONE_LOGFILE", ZONEPLUSONE_LOGFOLDER . 'log.csv');
 
 $IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
@@ -452,6 +452,8 @@ Class IFLZonePlusOne
         dbDelta($sql);
 
         add_option('zones_db_version', ZONES_DB_VERSION);
+
+        $this->log_action("Zones table created");
     }
 
     public function create_zone_tokens_table() {
@@ -471,6 +473,8 @@ Class IFLZonePlusOne
         dbDelta($sql);
 
         add_option('zone_tokens_db_version', ZONE_TOKENS_DB_VERSION);
+
+        $this->log_action("Zone tokens table created");
     }
 
     public function create_plus_one_zones_table() {
@@ -492,6 +496,8 @@ Class IFLZonePlusOne
         dbDelta($sql);
 
         add_option('plus_one_zones_db_version', PLUS_ONE_ZONES_DB_VERSION);
+
+        $this->log_action("Plus one zones table created");
     }
 
     public function does_zones_table_exist_in_database() {
@@ -667,9 +673,7 @@ Class IFLZonePlusOne
 
         $result = $wpdb->get_results("SELECT * FROM " . ZONE_TOKENS_TABLE_NAME . " WHERE token_id = '" . $token_id . "'");
         if ($wpdb->num_rows == 0) {
-            $message = "Zone token ID " . $token_id . " successfully deleted from zone tokens table";
-            $this->log_action($message);
-            return $message;
+            return "Zone token ID " . $token_id . " successfully deleted from zone tokens table";
         } else {
             return new WP_Error('unknown-error', "Error deleting zone token ID " . $token_id . " from the tokens table");
         }
@@ -984,7 +988,7 @@ Class IFLZonePlusOne
             $message = $item;
         }
 
-        error_log($message . " " . $date, 3, ZONEPLUSONE_LOGFILE);
+        error_log($date . "," . $message, 3, ZONEPLUSONE_LOGFILE);
         if ($echo) echo $message;
     }
 
