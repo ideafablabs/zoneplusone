@@ -258,6 +258,15 @@ Class IFLZonePlusOne
 
         // echo "</br>" . $this->add_zone_to_zones_table("Electronics zone") . "</br>";
 
+//        echo "Testing zone token deletion\n";
+//        $response = $this->delete_zone_token("15796", "79");
+//        if (is_wp_error($response)) {
+//            pr("Error - " . $response->get_error_messages()[0]);
+//            errout($response->get_error_messages());
+//        } else {
+//            pr($response);
+//        }
+
     }
 
     public function manage_user_tokens_page_call() { 
@@ -613,6 +622,59 @@ Class IFLZonePlusOne
         }
     }
 
+    public function delete_zone_token($token_id, $user_id) {
+        // This function removes a token from the zone tokens table, so that that token is no longer registered to
+        // any user, but it does not affect any records in the plus one zones table, because those are tied to users
+        // rather than individual tokens.
+        global $wpdb;
+        if (!self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
+            return new WP_Error('no-token-table', "Zone tokens table does not exist in database");
+        }
+
+        $token_id = trim($token_id);
+        if ($token_id == "") {
+            return new WP_Error('no-token-id', "Empty zone token ID");
+        } else if (!preg_match("/^\d+$/", $token_id)) {
+            return new WP_Error('non-numeric-token-id', "Non-numeric characters in zone token ID");
+        }
+
+        $user_id = trim($user_id);
+        if ($user_id == "") {
+            return new WP_Error('no-user-id', "Empty User ID");
+        }
+
+        if (!self::is_user_id_in_database($user_id)) {
+            return new WP_Error('user-missing', "User ID " . $user_id . " is not a registered user");
+        }
+
+        $response = $this->get_user_id_from_zone_token_id($token_id);
+        if (is_wp_error($response)) {
+            return $response;
+        } else {
+            $user_id_registered_to_that_token = $response;
+        }
+
+        if ($user_id_registered_to_that_token != $user_id) {
+            return new WP_Error('user-mismatch', "Token ID " . $token_id . " is registered to a different userID " . $user_id_registered_to_that_token . " {" . self::get_user_name_from_user_id($user_id_registered_to_that_token) . ")");
+        }
+
+        $wpdb->delete(
+            ZONE_TOKENS_TABLE_NAME,
+            array(
+                'token_id' => $token_id,
+            )
+        );
+
+        $result = $wpdb->get_results("SELECT * FROM " . ZONE_TOKENS_TABLE_NAME . " WHERE token_id = '" . $token_id . "'");
+        if ($wpdb->num_rows == 0) {
+            $message = "Zone token ID " . $token_id . " successfully deleted from zone tokens table";
+            $this->log_action($message);
+            return $message;
+        } else {
+            return new WP_Error('unknown-error', "Error deleting zone token ID " . $token_id . " from the tokens table");
+        }
+    }
+
     public function add_zone_to_zones_table($zone_name) {
         // This function is used by the Manage Zone Names submenu page, and should probably not be used by an API
         global $wpdb;
@@ -905,9 +967,12 @@ Class IFLZonePlusOne
         return $wpdb->num_rows != 0;
     }
 
-    public function log($item, $echo = 0) {
-
+    public function log_action($item, $echo = 0) {
+        echo "In the log function\n";
         if (!$this->check_log_file_exists()) return false;
+
+        date_default_timezone_set("America/Los_Angeles");
+        $date = date("Y-m-d H:i:s");
 
         if (is_array($item)) {
             if (is_wp_error($item)) {
@@ -919,7 +984,7 @@ Class IFLZonePlusOne
             $message = $item;
         }
 
-        error_log($message, 3, ZONEPLUSONE_LOGFILE);
+        error_log($message . " " . $date, 3, ZONEPLUSONE_LOGFILE);
         if ($echo) echo $message;
     }
 
