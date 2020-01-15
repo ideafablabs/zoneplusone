@@ -1,74 +1,5 @@
 
-#page-heading {
-	/*display: none;*/
-}
-
-/*@media screen and (max-width: 782px) {
-	html {
-	    margin-top: 0px !important;
-	}
-}*/
-.ifl-party-mechanics .entry {
-	border-radius:4px;
-	background:#FFF;
-	box-shadow: 0px 0px 2px #666;
-	padding:.4em .6em;
-	display: block;
-}
-.ifl-party-mechanics {
-
-}
-
-a.admit-button {
-	/*color:#1D8CB5;*/
-	color:white;
-	font-weight: bold;
-	padding:.8em;
-	margin-top:.5em;
-	border: 1px solid darkblue;
-	background:#1D8CB5;
-	border-radius:4px;
-	display: block;
-	font-size: 1.2em;
-	text-shadow: 0px 0px 1px #000;
-
-}
-a.admitting {
-	color:#aaa;
-	background:lightblue;
-}
-a.admitted {
-	color:#555;
-	background:#CCC;
-	text-shadow:0px 0px 0px #000;
-}
-.entry-email {
-	text-align: right;
-	color:#666;
-	font-size: 80%;
-}
-
-.admit-all {
-	float:right;
-	/*display: block;*/
-	/*background: lightblue;*/
-	/*color: black;*/
-	/*padding:3px 5px;*/
-	/*border-radius: 4px;*/
-	/*position: absolute;*/
-	/*top:1em;*/
-	/*right:1em;*/
-}
-
-.membership-terms {
-	overflow:scroll;
-	border:1px solid white;
-	height:150px;
-	font-size: 10px;
-	padding:10px;
-}
-
-.gform_wrapper .gfield_error .gfield_label {
+.ajax-failure {
 	color:red;
 }
 
@@ -113,9 +44,23 @@ table.member_select_list th {
 }
 table.member_select_list td,th {
 	vertical-align: middle;
-	padding:.6em;
+	padding:.3em .5em;
 	border: 0
 }
+table.member_select_list .user-tokens ul {
+	margin:.5em;
+}
+table.member_select_list .user-tokens li {
+	background: lightBlue;
+	border:1px solid #9999AA;
+	padding:.3em;
+	display: inline-block;
+	margin-right:.5em;
+	margin-bottom:0em;
+	border-radius: 2px;
+	/*margin-right*/
+}
+
 
 
 /*//// OLD STYLES /////*/
@@ -170,9 +115,6 @@ a.mm-button.new-signup span{
 	left:51%;
 	/*bottom:40px;*/
 }
-
-
-
 
 @media only screen and (max-width: 850px) { 
 

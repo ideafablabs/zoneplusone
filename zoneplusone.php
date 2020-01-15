@@ -55,39 +55,10 @@ Class IFLZonePlusOne
 
         add_action('wp_ajax_async_controller', array($this, 'async_controller'));
         add_action('wp_ajax_nopriv_async_controller', array($this, 'async_controller'));
-
-        add_action('wp_ajax_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
-        add_action('wp_ajax_nopriv_iflzpo_associate_last_token_with_user_id', array($this, 'iflzpo_associate_last_token_with_user_id'));
     }
 
-    public function iflzpo_associate_last_token_with_user_id() {
-        
-        // Get the User ID from the AJAX request.
-        $user_id = (!empty($_POST['user_id'])) ? $_POST['user_id'] : false;
-        
-        // If not there, fail.
-        if ($user_id === false) die("No user ID Found");
-
-        // Get the latest stored token from WP options table..
-        $token_id = get_option('token_id');        
-
-        // Try and add to token table.
-        $response = $this->add_zone_token_to_zone_tokens_table($token_id,$user_id);
-
-        // Did we fail?
-        if (is_wp_error($response)) {
-            $return = $response->get_error_message();            
-        } else {
-            $return = $response;            
-        }
-
-        // Always die in functions echoing Ajax content.
-        // wp_die(array('a' => 'b', 'b'=> 'c'));
-        wp_die($return);
-    }    
-
     // Async Controller
-    // https://stackoverflow.com/questions/17982078/returning-json-data-with-ajax-in-wordpress
+    // Easiest Overview of AJAX Setup for WP: https://stackoverflow.com/questions/17982078/returning-json-data-with-ajax-in-wordpress
     public function async_controller() { 
 
         // Switch on 'request' post var
@@ -132,22 +103,22 @@ Class IFLZonePlusOne
 
                 break;
             case 'remove_token':
-                // Get the User ID from the AJAX request.
-                $token_id = (!empty($package['token_id'])) ? $package['token_id'] : false;
+                // Get the Token ID from the AJAX request.
+                $token_id = (!empty($package['tid'])) ? $package['tid'] : false;
                 
                 // If not there, fail.
                 if ($token_id === false) {
                     $return['message'] = "No Token ID Found";
                     break;
                 } 
-
-                // Check if zone token id is in zone tokens table.
-                // $token_id = ('token_id');
+                
+                // Get user ID because its currently necessary for deleting a zone token, /// kind of as a safeguard.
+                $user_id = $this->get_user_id_from_zone_token_id($token_id);
 
                 // Try and add to token table.
                 /// this should be a try{}...
-                // $response = $this->remove_zone_token_from_zone_tokens_table($token_id);
-                $response = "";///
+                $response = $this->delete_zone_token($token_id,$user_id);
+                // $response = "";///
 
                 // Did we fail?
                 if (is_wp_error($response)) {
@@ -215,6 +186,7 @@ Class IFLZonePlusOne
             'manage_options',
             "assign_token_to_user_page",
             array($this, 'assign_token_to_user_page_call'));
+                    
     }
 
     public function admin_page_call() {
@@ -230,7 +202,7 @@ Class IFLZonePlusOne
                 </tr>';
 
         foreach ($zonedata as $key => $value) {
-            echo "<tr>";
+            echo '<tr>';
             echo "<td>" . $value['zone_name'] . "</td>";
             echo "<td>" . $value['this_month_plus_one_count'] . "</td>";
             echo "<td>" . $value['total_plus_one_count'] . "</td>";
@@ -315,21 +287,21 @@ Class IFLZonePlusOne
                 // Get users tokens array.
                 $tokens = $this->get_zone_token_ids_by_user_id($user->ID);
                
-                $response .= '<tr class="" data-user-id="'.$user->ID.'" data-sort="' . $user->display_name . '">
+                $response .= '<tr  class="user-'.$user->ID.'" data-user-id="'.$user->ID.'" data-sort="' . $user->display_name . '">
                     <td class="user-displayname">'.$user->display_name.'</td>
                     <td class="user-email">'. $user->user_email.'</td>
                     <td class="user-tokens">'; 
                     if (is_array($tokens)) {
                         $response .= '<ul>';
                         foreach ($tokens as $key => $token_id) {
-                            $response.= '<li>'.$token_id.'</li>';   
+                            $response.= '<li>'.$token_id.' <a class="remove-token icon" data-tid="'.$token_id.'">x</a></li>';
                         }
                         $response .= '</ul>';
                     } else {
                         $response.= '<span>'.$tokens.'</span>';   
                     }
                     $response .= '</td>
-                    <td><a class="add-button" data-uid="'.$user->ID.'">Add recent token</a></td>
+                    <td><a class="add-token" data-uid="'.$user->ID.'">Get New Token</a><span class="new-token"></span></td>
 
                     </tr>';
 
@@ -633,11 +605,13 @@ Class IFLZonePlusOne
         // any user, but it does not affect any records in the plus one zones table, because those are tied to users
         // rather than individual tokens.
         global $wpdb;
+        
         if (!self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
             return new WP_Error('no-token-table', "Zone tokens table does not exist in database");
         }
 
         $token_id = trim($token_id);
+        
         if ($token_id == "") {
             return new WP_Error('no-token-id', "Empty zone token ID");
         } else if (!preg_match("/^\d+$/", $token_id)) {

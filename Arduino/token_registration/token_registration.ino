@@ -179,7 +179,7 @@ void registerToken(long tokenID, int readerID) {
 	String response;
 	response = apiRequestPost(baseURI, postParams); 
 	
-	delay(1000); /// TODO: card reader logic should take over here
+	// delay(1000); /// TODO: card reader logic should take over here
 
 }
 
