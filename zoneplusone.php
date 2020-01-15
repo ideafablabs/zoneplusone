@@ -113,8 +113,8 @@ Class IFLZonePlusOne
                 } 
 
                 // Get the latest stored token from WP options table..
-                // $token_id = get_option('token_id');
-                $token_id = rand(10000,90000); ///
+                $token_id = get_option('token_id');
+                // $token_id = rand(10000,90000); ///
 
                 // Try and add to token table.
                 /// this should be a try{}...
@@ -606,7 +606,7 @@ Class IFLZonePlusOne
         if ($wpdb->num_rows != 0) {
             $user_id_already_registered = $result[0]->user_id;
             if ($user_id_already_registered != $user_id) {
-                return new WP_Error('user-mismatch', "Token ID " . $token_id . " is already registered to a different userID " . $user_id_already_registered . " {" . self::get_user_name_from_user_id($user_id_already_registered) . ")");
+                return new WP_Error('user-mismatch', "Token ID " . $token_id . " is already registered to a different userID " . $user_id_already_registered . " (" . self::get_user_name_from_user_id($user_id_already_registered) . ")");
                 // return "Error - zone token ID " . $token_id . " is already registered to a different userID (" . $user_id_already_registered . ")";
             }
             return new WP_Error('user-duplicate', "Token ID " . $token_id . " is already registered to that user ID (" . $user_id . ")");
@@ -621,7 +621,7 @@ Class IFLZonePlusOne
         );
         $result = $wpdb->get_results("SELECT * FROM " . ZONE_TOKENS_TABLE_NAME . " WHERE token_id = '" . $token_id . "'");
         if ($wpdb->num_rows != 0) {
-            return "Zone token ID " . $token_id . " successfully assigned to user ID " . $user_id . " {" . self::get_user_name_from_user_id($user_id) . ") in the zone tokens table";
+            return "Zone token ID " . $token_id . " successfully assigned to user ID " . $user_id . " (" . self::get_user_name_from_user_id($user_id) . ") in the zone tokens table";
         } else {
             return new WP_Error('unknown-error', "Error adding zone token ID to the tokens table");
             // return "Error adding zone token ID to the tokens table";
