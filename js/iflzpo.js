@@ -3,18 +3,18 @@ var $ = jQuery.noConflict();
 $(document).ready( function(){
 
 	// 
-	$(".add-safety").click(function(e) { 
-		e.preventDefault();
-		$(e.target).addClass('.add-button');
-		$(e.target).removeClass('.add-safety');
+	// $(".add-safety").click(function(e) { 
+	// 	e.preventDefault();
+	// 	$(e.target).addClass('.add-button');
+	// 	$(e.target).removeClass('.add-safety');
 
-	}
+	// });
 
 	// 
-	$(".add-token").click(function(e) {
+	$(".member_select_list").on('click','.add-token', function(e) {
 		e.preventDefault();
 		var target = e.target;
-		
+
 		// Get the relevant data.
 		var uid = jQuery(this).data( 'uid' );        
 		
@@ -36,6 +36,7 @@ $(document).ready( function(){
 				/// Gotta change this if we change the code. Find a new way!
 				var new_token = '<li>'+response.token_id+' <a class="remove-token icon" data-tid="'+response.token_id+'">x</a></li>';
 				$('tr.user-'+uid+' .user-tokens ul').append(new_token);
+				/// ADD EVENT HANDLER TO THIS. 
 
 				// $(target).parent('tr').children('.user-tokens ul')
 
@@ -54,7 +55,7 @@ $(document).ready( function(){
 		
 	});
 
-	$(".remove-token").click(function(e) {
+	$(".member_select_list").on('click','.remove-token', function(e) {
 		e.preventDefault();
 		var target = e.target;        
 		
