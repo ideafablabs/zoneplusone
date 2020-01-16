@@ -171,22 +171,22 @@ Class IFLZonePlusOne
             "Manage Zone Names",
             'manage_options',
             "manage_zone_names_page",
-            array($this, 'manage_zone_names_page_call'));
-
+            array($this, 'manage_zone_names_page_call')
+        );
         add_submenu_page('plus_one_zones_menu_page',
             "Manage User Tokens",
             "Manage User Tokens",
             'manage_options',
             "manage_user_tokens_page",
-            array($this, 'manage_user_tokens_page_call'));
-
+            array($this, 'manage_user_tokens_page_call')
+        );
         add_submenu_page('plus_one_zones_menu_page',
             "Assign token to user",
             "Assign token to user",
             'manage_options',
             "assign_token_to_user_page",
-            array($this, 'assign_token_to_user_page_call'));
-                    
+            array($this, 'assign_token_to_user_page_call')
+        );
     }
 
     public function admin_page_call() {

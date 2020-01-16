@@ -18,7 +18,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 
 		]);
 
-		register_rest_route( $namespace, '/zone/', [
+		register_rest_route( $namespace, '/zones/', [
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_all_zones' ),
@@ -27,7 +27,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 
 		]);
 
-		register_rest_route( $namespace, '/zone/(?P<zone_id>\d+)', [
+		register_rest_route( $namespace, '/zones/(?P<zone_id>\d+)', [
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_zone_count' ),
@@ -55,8 +55,6 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 		}
 
 		// Success Case.
-		/// it appears that WP_REST_Response json-encodes already.
-		// $zone_counts = json_encode($zone_counts);
 		return new WP_REST_Response($zone_counts, 200);
 	}
 
@@ -158,7 +156,6 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 			/// Could be error object here?
 			return new WP_REST_Response("NFC parameters not found", 200);
 		}
-
 	}
 
 	public function get_items_permissions_check($request) {

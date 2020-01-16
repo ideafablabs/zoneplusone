@@ -16,7 +16,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 
-#define READER_ID 1
+#define ZONE_ID 1 // Zone ID's can be found on the website.
 
 // String API_BASE = "https://santacruz.ideafablabs.com/";
 // String API_BASE = "http://192.168.0.73/"; //Temporary Local
@@ -55,13 +55,13 @@ boolean tokenAcquired = false;
 boolean lastStatusCard1 = false;
 
 uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
-uint8_t color = 100;  // number between 1-255
+uint8_t color = 1;  // number between 1-255
 uint8_t colorCase = 0;
 int step = 0 ;
 
 void setupWiFi() {
 	WiFi.mode(WIFI_STA);
-
+	
 	wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
 
 	while (wifiMulti.run() != WL_CONNECTED) {
@@ -76,7 +76,7 @@ void setupWiFi() {
 }
 
 void setup() {
-	// put your setup code here, to run once:
+
 	Serial.begin(115200);
 	Serial.println("Hello!");
 	nfc.begin();
@@ -151,77 +151,69 @@ void loop() {
 		if (tokenAcquired == true) {
 			Serial.print("Reader detected tokenID: ");
 			Serial.println(id(tokenID));
-			registerToken(id(tokenID), READER_ID);
+			plusOneZone(id(tokenID), ZONE_ID);
 		}
 		lastRead = now;
 	}
 }
 
-void registerToken(long tokenID, int readerID) {
+void plusOneZone(long tokenID, int zoneID) {
  
-	Serial.println("Registering Token...");
+	Serial.println("Plus One Zoning...");
 	
-	String tokenString = String(tokenID);
-	String baseURI = API_BASE+API_ENDPOINT + "reader/";
+	String tokenString = String(tokenID);		
+	String baseURI = API_BASE+API_ENDPOINT + "zones/"+zoneID;
 	String postParams = "token_id=" + tokenString;
-
+	
 	String response = apiRequestPost(baseURI, postParams); 
 }
 
 String apiRequestPost(String request, String params) {
 		
-		String response;
-		Serial.println("POST REQUEST: " + request + "?" + params);	
-
-		Serial.print("[HTTP] begin...\n");
+	String response;
+	Serial.println("POST REQUEST: " + request + "?" + params);	
+	// Serial.print("[HTTP] begin...\n");
+	
+	if (http.begin(client, request)) {  // HTTP
+		Serial.print("[HTTP] POST...\n");
 		
-		if (http.begin(client, request)) {  // HTTP
-			Serial.print("[HTTP] POST...\n");
-			// add headers
-			http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-			// start connection and send HTTP header
-			int httpCode = http.POST(params);
-			// httpCode will be negative on error
-			if (httpCode > 0) {
-				// HTTP header has been send and Server response header has been handled
-				Serial.printf("[HTTP] POST... code: %d\n", httpCode);
+		// add headers
+		http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+		
+		// start connection and send HTTP header
+		int httpCode = http.POST(params);
+		
+		// httpCode will be negative on error
+		if (httpCode > 0) {
+			// HTTP header has been send and Server response header has been handled
+			Serial.printf("[HTTP] POST... code: %d\n", httpCode);
 
-				// file found at server
-				Serial.printf("Payload: ");
-				if (httpCode == HTTP_CODE_OK || httpCode == 201 || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-					response = http.getString();
-					Serial.println(response);
-				}
-			} else {
-				response = printf("Error: %s", http.errorToString(httpCode).c_str());
-				Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+			// file found at server
+			Serial.printf("Payload: ");
+			if (httpCode == HTTP_CODE_OK || httpCode == 201 || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+				response = http.getString();
+				Serial.println(response);
 			}
-			http.end();
-		
 		} else {
-			Serial.printf("[HTTP} Unable to connect\n");
+			response = printf("Error: %s", http.errorToString(httpCode).c_str());
+			Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
 		}
+		http.end();
+	
+	} else {
+		Serial.printf("[HTTP} Unable to connect.\n");
+	}
 
-		return response;
+	return response;
 }
 
 //Show real number for tokenID
 long id(uint8_t bins[]) {
- uint32_t c;
- c = bins[0];
- for (int i=1;i<count(bins);i++){
-	 c <<= 8;
-	 c |= bins[i];
- }
- return c;
-}
-
-uint8_t red(uint32_t c) {
-	return (c >> 16);
-}
-uint8_t green(uint32_t c) {
-	return (c >> 8);
-}
-uint8_t blue(uint32_t c) {
-	return (c);
+	uint32_t c;
+	c = bins[0];
+	for (int i=1;i<count(bins);i++){
+		c <<= 8;
+		c |= bins[i];
+	}
+	return c;
 }
