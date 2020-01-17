@@ -17,6 +17,7 @@
 #include <ESP8266HTTPClient.h>
 
 #define ZONE_ID 1 // Zone ID's can be found on the website.
+#define READER_ID 1 
 
 // String API_BASE = "https://santacruz.ideafablabs.com/";
 // String API_BASE = "http://192.168.0.73/"; //Temporary Local
@@ -62,6 +63,7 @@ int step = 0 ;
 void setupWiFi() {
 	WiFi.mode(WIFI_STA);
 	
+	wifiMulti.addAP("omino warp", "0123456789");
 	wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
 
 	while (wifiMulti.run() != WL_CONNECTED) {
@@ -84,7 +86,8 @@ void setup() {
 	uint32_t versiondata = nfc.getFirmwareVersion();
 	if (! versiondata) {
 		Serial.print("Didn't find PN53x board");
-		while (1); // halt
+		delay(1000); // wait a second and give it a go.
+    	ESP.restart();
 	}
 	// Got ok data, print it out!
 	Serial.print("Found chip PN532"); Serial.println((versiondata>>24) & 0xFF, HEX); 
@@ -149,9 +152,13 @@ void loop() {
 		tokenAcquired = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &tokenID[0], &tokenIDLength,100);
 
 		if (tokenAcquired == true) {
-			Serial.print("Reader detected tokenID: ");
-			Serial.println(id(tokenID));
-			plusOneZone(id(tokenID), ZONE_ID);
+
+			Serial.printf("Reader detected tokenID: %4d ", id(tokenID));			
+			if (READER_ID) {				
+				registerToken(id(tokenID), READER_ID);
+			} else {
+				plusOneZone(id(tokenID), ZONE_ID);
+			}
 		}
 		lastRead = now;
 	}
@@ -165,6 +172,17 @@ void plusOneZone(long tokenID, int zoneID) {
 	String baseURI = API_BASE+API_ENDPOINT + "zones/"+zoneID;
 	String postParams = "token_id=" + tokenString;
 	
+	String response = apiRequestPost(baseURI, postParams); 
+}
+
+void registerToken(long tokenID, int readerID) {
+ 
+	Serial.println("Registering Token...");
+	
+	String tokenString = String(tokenID);
+	String baseURI = API_BASE+API_ENDPOINT + "reader/";
+	String postParams = "token_id=" + tokenString;
+
 	String response = apiRequestPost(baseURI, postParams); 
 }
 

@@ -19,8 +19,8 @@
 #define READER_ID 1
 
 // String API_BASE = "https://santacruz.ideafablabs.com/";
-// String API_BASE = "http://192.168.0.73/"; //Temporary Local
-String API_BASE = "http://10.0.4.127/"; //Temporary Local
+String API_BASE = "http://192.168.0.73/"; //Temporary Local
+// String API_BASE = "http://10.0.4.127/"; //Temporary Local
 String API_ENDPOINT = "wp-json/zoneplusone/v1/";
 
 // LED Details
@@ -79,12 +79,13 @@ void setup() {
 	// put your setup code here, to run once:
 	Serial.begin(115200);
 	Serial.println("Hello!");
-	nfc.begin();
 	
+	nfc.begin();
 	uint32_t versiondata = nfc.getFirmwareVersion();
 	if (! versiondata) {
 		Serial.print("Didn't find PN53x board");
-		while (1); // halt
+		delay(1000); // wait a second and give it a go.
+    ESP.restart();
 	}
 	// Got ok data, print it out!
 	Serial.print("Found chip PN532"); Serial.println((versiondata>>24) & 0xFF, HEX); 
