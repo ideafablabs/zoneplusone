@@ -15,14 +15,16 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
+#include "FS.h"
 
 #define ZONE_ID 1 // Zone ID's can be found on the website.
-#define READER_ID 1 
+#define READER_ID 0 
 
 // String API_BASE = "https://santacruz.ideafablabs.com/";
 // String API_BASE = "http://192.168.0.73/"; //Temporary Local
 String API_BASE = "http://10.0.4.127/"; //Temporary Local
 String API_ENDPOINT = "wp-json/zoneplusone/v1/";
+String LOG_FILE = "actions.log";
 
 // LED Details
 #define LEDPIN 2
@@ -35,6 +37,8 @@ String API_ENDPOINT = "wp-json/zoneplusone/v1/";
 #define PN532_SS   15
 #define PN532_MISO 12
 #define PN532_SS2   16
+
+
 
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
@@ -81,6 +85,7 @@ void setup() {
 
 	Serial.begin(115200);
 	Serial.println("Hello!");
+	
 	nfc.begin();
 	
 	uint32_t versiondata = nfc.getFirmwareVersion();
@@ -101,11 +106,16 @@ void setup() {
 
 	// Configure board to read RFID tags
 	nfc.SAMConfig();
-	Serial.println("Reader ready.  Waiting for an ISO14443A card...");
+	Serial.println("Reader ready. Waiting for an ISO14443A card...");
 
 	setupWiFi();
 
-	// LED Launch
+	// Start the file system.
+	SPIFFS.begin();
+	logAction("Booted Up");
+	readLog();
+
+	// LED Launch.
 	strip.setBrightness(BRIGHTNESS);
 	strip.begin();
 	strip.show(); // Initialize all pixels to 'off'
@@ -113,10 +123,10 @@ void setup() {
 
 void loop() {
 	
-	// get time
-	 now = millis();
+	// Get time.
+	now = millis();
 	
-	 // do LEDS
+	 // Do LEDS...
 	if (now >= lastBlink + ledPeriod) {
 		if (tokenAcquired) {
 			for(int i=0; i<NUM_LEDS; i++){
@@ -132,28 +142,29 @@ void loop() {
 		// Let the magic happen.
 		strip.show();
  
-		// Update step
+		// Update step.
 		step++;
 
-		// Update timer
+		// Update timer.
 		lastBlink = now;
 	}
 	
-	// Do card read
+	// Do card read.
 	if (now >= lastRead + cardreaderPeriod) {
 		
 		static int pollCount = 0; // just for printing the poll dots.
-  	if (pollCount % 20 == 0) // so the dots dont scroll right forever.
-    Serial.printf("\n%4d ", pollCount);
-  	pollCount++;
-  	Serial.print(".");
+  		if (pollCount % 60 == 0) // so the dots dont scroll right forever.
+			Serial.printf("\n%4d ", pollCount);
+  		pollCount++;
+  		Serial.print(".");
 		
 		// Capture from reader
 		tokenAcquired = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &tokenID[0], &tokenIDLength,100);
 
 		if (tokenAcquired == true) {
 
-			Serial.printf("Reader detected tokenID: %4d ", id(tokenID));			
+			logAction("Reader detected tokenID: " + (String)id(tokenID));			
+			
 			if (READER_ID) {				
 				registerToken(id(tokenID), READER_ID);
 			} else {
@@ -166,18 +177,14 @@ void loop() {
 
 void plusOneZone(long tokenID, int zoneID) {
  
-	Serial.println("Plus One Zoning...");
-	
 	String tokenString = String(tokenID);		
 	String baseURI = API_BASE+API_ENDPOINT + "zones/"+zoneID;
-	String postParams = "token_id=" + tokenString;
+	String postParams = "token_id=" + tokenString;	
 	
 	String response = apiRequestPost(baseURI, postParams); 
 }
 
 void registerToken(long tokenID, int readerID) {
- 
-	Serial.println("Registering Token...");
 	
 	String tokenString = String(tokenID);
 	String baseURI = API_BASE+API_ENDPOINT + "reader/";
@@ -189,37 +196,38 @@ void registerToken(long tokenID, int readerID) {
 String apiRequestPost(String request, String params) {
 		
 	String response;
-	Serial.println("POST REQUEST: " + request + "?" + params);	
-	// Serial.print("[HTTP] begin...\n");
+	logAction("POST REQUEST: " + request + "?" + params);
 	
 	if (http.begin(client, request)) {  // HTTP
-		Serial.print("[HTTP] POST...\n");
-		
-		// add headers
+				
+		// Craft HTTP Header and start connection...
 		http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-		
-		// start connection and send HTTP header
 		int httpCode = http.POST(params);
 		
 		// httpCode will be negative on error
 		if (httpCode > 0) {
-			// HTTP header has been send and Server response header has been handled
-			Serial.printf("[HTTP] POST... code: %d\n", httpCode);
+
+			// HTTP header has been sent and Server response header has been handled
+			logAction("[HTTP] POST RESPONSE... code: "+(String)httpCode);
 
 			// file found at server
-			Serial.printf("Payload: ");
+			
 			if (httpCode == HTTP_CODE_OK || httpCode == 201 || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
 				response = http.getString();
-				Serial.println(response);
+				// Serial.println(response);
 			}
+
 		} else {
-			response = printf("Error: %s", http.errorToString(httpCode).c_str());
-			Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+			response = "Error: " + http.errorToString(httpCode);
+			// Serial.println(response);
 		}
+		
+		logAction(response);
+		
 		http.end();
 	
 	} else {
-		Serial.printf("[HTTP} Unable to connect.\n");
+		logAction("[HTTP] Unable to connect.");
 	}
 
 	return response;
@@ -234,4 +242,49 @@ long id(uint8_t bins[]) {
 		c |= bins[i];
 	}
 	return c;
+}
+
+void readLog() {
+	
+	int xCnt = 0;
+  
+	File f = SPIFFS.open(LOG_FILE, "r");
+  
+	if (!f) {
+		Serial.println("file open failed");
+  	}  Serial.println("====== Reading from LOG_FILE =======");
+
+	while(f.available()) {
+      //Lets read line by line from the file
+      String line = f.readStringUntil('\n');
+      Serial.print(xCnt);
+      Serial.print("  ");
+      Serial.println(line);
+      xCnt ++;
+    }
+    f.close();    
+}
+
+void flushLog() {
+	File f = SPIFFS.open(LOG_FILE, "w");	
+		f.printf("%s %s: ", __DATE__, __TIME__);
+		f.println("Begin Log");
+	f.close();
+}
+
+void logAction(String actionString) {
+    
+	Serial.printf("\n%s %s: ", __DATE__, __TIME__);
+	Serial.println(actionString);
+
+	char* mode = "a";
+
+	// if not exists, create using W, other wise append with A
+	if (!SPIFFS.exists(LOG_FILE)) mode = "w";
+
+	File f = SPIFFS.open(LOG_FILE, mode);			
+		f.printf("%s %s: ", __DATE__, __TIME__);
+		f.println(actionString);
+	f.close();
+    
 }
