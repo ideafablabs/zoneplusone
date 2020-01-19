@@ -109,7 +109,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 				return new WP_REST_Response($response->get_error_messages() , 200);  
 			} else {
 				/// Log success.                
-				return new WP_REST_Response($response , 200);	
+				return new WP_REST_Response($response , 201);	
 			}
 			
 		} else {
