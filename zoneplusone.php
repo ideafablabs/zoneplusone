@@ -930,6 +930,7 @@ Class IFLZonePlusOne
                 $zone_row = array();
                 $zone_row["zone_name"] = $zone->zone_name;
                 $id = $zone->record_id;
+                $zone_row["zone_id"] = $id;
                 $zone_row["total_plus_one_count"] = $this->get_total_plus_one_count_by_zone_id($id);
                 $zone_row["this_month_plus_one_count"] = $this->get_this_months_plus_one_count_by_zone_id($id);
                 array_push($zones_plus_one_array, $zone_row);
