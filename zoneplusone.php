@@ -1016,6 +1016,16 @@ Class IFLZonePlusOne
         wp_enqueue_style('iflzpo-style');        
     }
 
+    public function whenIsSunsetToday() {
+        // See https://catalog.data.gov/dataset/tsa-sunrise-sunset-times-api
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, "http://apps.tsa.dhs.gov/MyTSAWebService/GetEventInfo.ashx?eventtype=sunset&airportcode=SJC&output=json");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        $result = json_decode(curl_exec($curl), true)["Sunset"];
+        curl_close($curl);
+        return $result;
+    }
+
 }
 
 function pr($input) {
