@@ -6,7 +6,6 @@
  */
 
 #include <Adafruit_NeoPixel.h>
-#include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 
@@ -28,13 +27,11 @@ WiFiClient client;
 ESP8266WiFiMulti wifiMulti;
 asyncHTTPrequest async;
 
-#define count(x) (sizeof(x) / sizeof(x[0]))
-
 long now,lastBlink,lastRead =0;
 uint16_t ledPeriod = 300; // ms
 uint16_t cardreaderPeriod = 500; // ms
 
-boolean success;
+typedef uint32_t nfcid_t; // we treat the NFCs as 4 byte values throughout, for easiest.
 uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned TokenID
 uint8_t tokenIDLength;        // Length of the TokenID (4 or 7 bytes depending on ISO14443A card type)
 boolean tokenAcquired = false;
@@ -44,23 +41,6 @@ uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
 uint8_t color = 1;  // number between 1-255
 uint8_t colorCase = 0;
 int step = 0 ;
-
-void setupWiFi() {
-	WiFi.mode(WIFI_STA);
-	
-	wifiMulti.addAP(SSID1, PASSWORD1);
-	wifiMulti.addAP(SSID2, PASSWORD2);
-
-	while (wifiMulti.run() != WL_CONNECTED) {
-		Serial.println("WiFi not connected!");
-		delay(1000);
-	} 
-	Serial.println("");
-	Serial.println("WiFi connected");
-	Serial.println("IP address: ");
-	Serial.println(WiFi.localIP());
-	Serial.println(WiFi.SSID());
-}
 
 void setup() {
 
@@ -114,10 +94,45 @@ void loop() {
 	// Get time.
 	now = millis();
 	
-	 // Do LEDS...
+	// +-------------------------
+	// | Poll the NFC
+	static nfcid_t lastID = -1;
+	static nfcid_t tokenID = -1;
+
+	if (now >= lastRead + cardreaderPeriod) { // time for next poll?
+  
+		tokenID = pollNfc();
+	 	
+	 	if (tokenID != lastID) { // Detect change in card.
+	 			 		
+	 		if (tokenID != 0){
+				logAction("Reader detected tokenID: " + (String)tokenID);
+
+				// reader state becomes active
+
+
+				if (READER_ID) {									
+					registerToken(tokenID, READER_ID);
+				} else {
+					plusOneZone(tokenID, ZONE_ID);
+				}				
+			} else {				
+				// reader state becomes inactive.
+
+			}
+			lastID = tokenID;
+		} else {
+			// increase hold timer.
+
+		}
+		lastRead = now;
+	}
+
+	// +-------------------------
+	// | Do LEDs.	
 	if (now >= lastBlink + ledPeriod) {
 		
-		if (tokenAcquired) {
+		if (tokenID) {
 			for(int i=0; i<NUM_LEDS; i++){
 				strip.setPixelColor(i, 0);
 			}
@@ -139,43 +154,32 @@ void loop() {
 		lastBlink = now;
 	}
 	
-	// Do card read.
-	if (now >= lastRead + cardreaderPeriod) {
-		
-		static int pollCount = 0; // just for printing the poll dots.
-  		if (pollCount % 60 == 0) // so the dots dont scroll right forever.
-			Serial.printf("\n%4d ", pollCount);
-  		pollCount++;
-  		Serial.print(".");
-		
-		// Capture from reader
-		tokenAcquired = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &tokenID[0], &tokenIDLength,100);
-
-		if (tokenAcquired == true) {
-
-			logAction("Reader detected tokenID: " + (String)id(tokenID));			
-			
-			if (READER_ID) {				
-				// sendAsyncTest();
-				registerToken(id(tokenID), READER_ID);
-			} else {
-				plusOneZone(id(tokenID), ZONE_ID);
-			}
-		}
-		lastRead = now;
-	}
 }
 
+// https://github.com/boblemaire/asyncHTTPrequest
+// https://stackoverflow.com/questions/54820798/how-to-receive-json-response-from-rest-api-using-esp8266-arduino-framework
+void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readyState) {
+  
+  switch (readyState) {
+    case 0: // readyStateUnsent: Client created, open not yet called.
+      break;
 
-void startAsyncRequest(String request, String params, String type){
-    
-	logAction(type + " REQUEST: " + request + "?" + params);
-    
-	if(async.readyState() == 0 || async.readyState() == 4){		
-		async.open(type.c_str(),request.c_str());
-		if (type == "POST") async.setReqHeader("Content-Type","application/x-www-form-urlencoded");
-		async.send(params);	
-	}
+    case 1: // readyStateOpened: open() has been called, connected    	
+      break;
+
+    case 2: // readyStateHdrsRecvd: send() called, response headers available
+      break;
+
+    case 3:	// readyStateLoading: receiving, partial data available
+      break;
+
+    case 4: // readyStateDone: Request complete, all data available.
+
+    	// Log Response.
+    	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
+
+      break;
+  }
 }
 
 void plusOneZone(long tokenID, int zoneID) {
@@ -196,57 +200,74 @@ void registerToken(long tokenID, int readerID) {
 	startAsyncRequest(baseURI,params,"POST");
 }
 
+// Wifi Setup.
+void setupWiFi() {
+	WiFi.mode(WIFI_STA);
+	
+	wifiMulti.addAP(SSID1, PASSWORD1);
+	wifiMulti.addAP(SSID2, PASSWORD2);
+
+	while (wifiMulti.run() != WL_CONNECTED) {
+		Serial.println("WiFi not connected!");
+		delay(1000);
+	} 
+	
+	logAction("WiFi connected to SSID: '"+WiFi.SSID()+"' @ "+WiFi.localIP().toString());
+}
+
+// Async Setup.
 void setupClient() {
   async.setTimeout(5);
   async.setDebug(false);
   async.onReadyStateChange(onClientStateChange);
 }
 
-// https://github.com/boblemaire/asyncHTTPrequest
-void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readyState) {
-  // Serial.println(readyState);
-  switch (readyState) {
-    case 0:
-      // readyStateUnsent     // Client created, open not yet called
-    	// Serial.println("Async Ready");
-      break;
-
-    case 1:
-      // readyStateOpened     // open() has been called, connected
-    	// Serial.println("Client Opened");
-      break;
-
-    case 2:
-      // readyStateHdrsRecvd  // send() called, response headers available
-      break;
-
-    case 3:
-      // readyStateLoading    // receiving, partial data available
-      break;
-
-    case 4:
-      // readyStateDone       // Request complete, all data available.
-
-    	/*
-    	#define HTTPCODE_CONNECTION_REFUSED  (-1)
-		#define HTTPCODE_SEND_HEADER_FAILED  (-2)
-		#define HTTPCODE_SEND_PAYLOAD_FAILED (-3)
-		#define HTTPCODE_NOT_CONNECTED       (-4)
-		#define HTTPCODE_CONNECTION_LOST     (-5)
-		#define HTTPCODE_NO_STREAM           (-6)
-		#define HTTPCODE_NO_HTTP_SERVER      (-7)
-		#define HTTPCODE_TOO_LESS_RAM        (-8)
-		#define HTTPCODE_ENCODING            (-9)
-		#define HTTPCODE_STREAM_WRITE        (-10)
-		#define HTTPCODE_TIMEOUT             (-11)
-		*/
-    	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
-
-      break;
-  }
+void startAsyncRequest(String request, String params, String type){
+    
+	logAction(type + " REQUEST: " + request + "?" + params);
+    
+	if(async.readyState() == 0 || async.readyState() == 4){		
+		async.open(type.c_str(),request.c_str());
+		if (type == "POST") async.setReqHeader("Content-Type","application/x-www-form-urlencoded");
+		async.send(params);	
+	}
 }
 
-//Show real number for tokenID
+// Return the 64 bit uid, with ZERO meaning nothing presently detected.
+nfcid_t pollNfc()
+{
+	uint8_t uidBytes[8] = {0};
+	uint8_t uidLength;
+	nfcid_t uid = 0;
+
+	static int pollCount = 0; // just for printing the poll dots.
+	char pollChar = '.'; // dots for no read, + for active.
+
+	// Check for card
+	int foundCard = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uidBytes[0], &uidLength, 100);
+
+	if (foundCard) {		
+		uidLength = 4; // it's little endian, the lower four are enough, and all we can use on this itty bitty cpu. ///magic numbers
+	 	
+	 	// Unspool the bins right here.
+	 	for (int ix = 0; ix < uidLength; ix++)
+			uid = (uid << 8) | uidBytes[ix];
+
+		pollChar = '+'; //
+	}
+
+	
+	if (pollCount % 20 == 0)  // so the dots dont scroll right forever.
+		Serial.printf("\n%4d ", pollCount);
+	pollCount++;
+	Serial.print(pollChar);
+	return uid;
+}
+
+// Count Macro.
+#define count(x) (sizeof(x) / sizeof(x[0]))
+
+//Show real number for tokenID.
 long id(uint8_t bins[]) {
 	uint32_t c;
 	c = bins[0];
