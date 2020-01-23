@@ -47,9 +47,8 @@ int step = 0 ;
 void setupWiFi() {
 	WiFi.mode(WIFI_STA);
 	
-	wifiMulti.addAP("Idea Fab Labs", "vortexrings");
-	wifiMulti.addAP("omino warp", "0123456789");
-	wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
+	wifiMulti.addAP(SSID1, PASSWORD1);
+	wifiMulti.addAP(SSID2, PASSWORD2);
 
 	while (wifiMulti.run() != WL_CONNECTED) {
 		Serial.println("WiFi not connected!");

@@ -10,6 +10,8 @@
 
 #define SSID1 "MYWIFISSID"
 #define PASSWORD1 "MYWIFIPASS"
+#define SSID2 "MYWIFISSID"
+#define PASSWORD2 "MYWIFIPASS"
 
 #define API_BASE "http://192.168.0.1/" // Server Location
 #define API_ENDPOINT "wp-json/zoneplusone/v1/" // API Endpoint
