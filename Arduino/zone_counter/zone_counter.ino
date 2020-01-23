@@ -17,28 +17,8 @@
 #include <ESP8266HTTPClient.h>
 #include "FS.h"
 
-#define ZONE_ID 1 // Zone ID's can be found on the website.
-#define READER_ID 0 
-
-// String API_BASE = "https://santacruz.ideafablabs.com/";
-// String API_BASE = "http://192.168.0.73/"; //Temporary Local
-String API_BASE = "http://10.0.4.127/"; //Temporary Local
-String API_ENDPOINT = "wp-json/zoneplusone/v1/";
-String LOG_FILE = "actions.log";
-
-// LED Details
-#define LEDPIN 2
-#define NUM_LEDS 12
-#define BRIGHTNESS 50
-
-// NFC Details
-#define PN532_SCK  14
-#define PN532_MOSI 13
-#define PN532_SS   15
-#define PN532_MISO 12
-#define PN532_SS2   16
-
-
+// Setup Config.h by duplicating config-sample.h.
+#include "config.h"
 
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
@@ -67,6 +47,7 @@ int step = 0 ;
 void setupWiFi() {
 	WiFi.mode(WIFI_STA);
 	
+	wifiMulti.addAP("Idea Fab Labs", "vortexrings");
 	wifiMulti.addAP("omino warp", "0123456789");
 	wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
 
@@ -85,7 +66,12 @@ void setup() {
 
 	Serial.begin(115200);
 	Serial.println("Hello!");
-	
+
+	// LED Launch.
+	strip.setBrightness(BRIGHTNESS);
+	strip.begin();
+	showAll(0xFF0000);
+
 	nfc.begin();
 	
 	uint32_t versiondata = nfc.getFirmwareVersion();
@@ -106,19 +92,18 @@ void setup() {
 
 	// Configure board to read RFID tags
 	nfc.SAMConfig();
-	Serial.println("Reader ready. Waiting for an ISO14443A card...");
+	Serial.println("NFC ready. Waiting for an ISO14443A card...");
+
+	showAll(0x0000FF);
 
 	setupWiFi();
 
 	// Start the file system.
 	SPIFFS.begin();
 	logAction("Booted Up");
-	readLog();
+	// readLog();	
 
-	// LED Launch.
-	strip.setBrightness(BRIGHTNESS);
-	strip.begin();
-	strip.show(); // Initialize all pixels to 'off'
+	showAll(0x00FF00);
 }
 
 void loop() {
@@ -243,7 +228,15 @@ long id(uint8_t bins[]) {
 	}
 	return c;
 }
+// === LED Functions ===
+void showAll(uint32_t color) {
+	for(int i=0; i<NUM_LEDS; i++){
+	    strip.setPixelColor(i,color);
+	}
+	strip.show();
+}
 
+// === Log Functions ===
 void readLog() {
 	
 	int xCnt = 0;
