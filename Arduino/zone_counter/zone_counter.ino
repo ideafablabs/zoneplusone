@@ -10,11 +10,12 @@
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 
-#include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
+#include <ESPAsyncTCP.h>
+#include <asyncHTTPrequest.h>
 #include "FS.h"
 
 // Setup Config.h by duplicating config-sample.h.
@@ -24,8 +25,8 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
 
 WiFiClient client;
-HTTPClient http;
 ESP8266WiFiMulti wifiMulti;
+asyncHTTPrequest async;
 
 #define count(x) (sizeof(x) / sizeof(x[0]))
 
@@ -97,12 +98,15 @@ void setup() {
 
 	setupWiFi();
 
+	showAll(0x00FF00);
+
 	// Start the file system.
 	SPIFFS.begin();
+	setupClient();
+	
 	logAction("Booted Up");
 	// readLog();	
-
-	showAll(0x00FF00);
+	
 }
 
 void loop() {
@@ -112,10 +116,12 @@ void loop() {
 	
 	 // Do LEDS...
 	if (now >= lastBlink + ledPeriod) {
+		
 		if (tokenAcquired) {
 			for(int i=0; i<NUM_LEDS; i++){
-				strip.setPixelColor(i, 0xFF00FF);
-			}  
+				strip.setPixelColor(i, 0);
+			}
+			strip.setPixelColor(step % NUM_LEDS, 0x00FFFF);  
 		} else {
 			for(int i=0; i<NUM_LEDS; i++){
 				strip.setPixelColor(i,0);
@@ -150,6 +156,7 @@ void loop() {
 			logAction("Reader detected tokenID: " + (String)id(tokenID));			
 			
 			if (READER_ID) {				
+				// sendAsyncTest();
 				registerToken(id(tokenID), READER_ID);
 			} else {
 				plusOneZone(id(tokenID), ZONE_ID);
@@ -159,62 +166,84 @@ void loop() {
 	}
 }
 
+
+void startAsyncRequest(String request, String params, String type){
+    
+	logAction(type + " REQUEST: " + request + "?" + params);
+    
+	if(async.readyState() == 0 || async.readyState() == 4){		
+		async.open(type.c_str(),request.c_str());
+		if (type == "POST") async.setReqHeader("Content-Type","application/x-www-form-urlencoded");
+		async.send(params);	
+	}
+}
+
 void plusOneZone(long tokenID, int zoneID) {
  
 	String tokenString = String(tokenID);		
 	String baseURI = API_BASE+API_ENDPOINT + "zones/"+zoneID;
-	String postParams = "token_id=" + tokenString;	
+	String params = "token_id=" + tokenString;	
 	
-	String response = apiRequestPost(baseURI, postParams); 
+	startAsyncRequest(baseURI,params,"POST");
 }
 
 void registerToken(long tokenID, int readerID) {
 	
 	String tokenString = String(tokenID);
 	String baseURI = API_BASE+API_ENDPOINT + "reader/";
-	String postParams = "token_id=" + tokenString;
+	String params = "token_id=" + tokenString;	
 
-	String response = apiRequestPost(baseURI, postParams); 
+	startAsyncRequest(baseURI,params,"POST");
 }
 
-String apiRequestPost(String request, String params) {
-		
-	String response;
-	logAction("POST REQUEST: " + request + "?" + params);
-	
-	if (http.begin(client, request)) {  // HTTP
-				
-		// Craft HTTP Header and start connection...
-		http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-		int httpCode = http.POST(params);
-		
-		// httpCode will be negative on error
-		if (httpCode > 0) {
+void setupClient() {
+  async.setTimeout(5);
+  async.setDebug(false);
+  async.onReadyStateChange(onClientStateChange);
+}
 
-			// HTTP header has been sent and Server response header has been handled
-			logAction("[HTTP] POST RESPONSE... code: "+(String)httpCode);
+// https://github.com/boblemaire/asyncHTTPrequest
+void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readyState) {
+  // Serial.println(readyState);
+  switch (readyState) {
+    case 0:
+      // readyStateUnsent     // Client created, open not yet called
+    	// Serial.println("Async Ready");
+      break;
 
-			// file found at server
-			
-			if (httpCode == HTTP_CODE_OK || httpCode == 201 || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-				response = http.getString();
-				// Serial.println(response);
-			}
+    case 1:
+      // readyStateOpened     // open() has been called, connected
+    	// Serial.println("Client Opened");
+      break;
 
-		} else {
-			response = "Error: " + http.errorToString(httpCode);
-			// Serial.println(response);
-		}
-		
-		logAction(response);
-		
-		http.end();
-	
-	} else {
-		logAction("[HTTP] Unable to connect.");
-	}
+    case 2:
+      // readyStateHdrsRecvd  // send() called, response headers available
+      break;
 
-	return response;
+    case 3:
+      // readyStateLoading    // receiving, partial data available
+      break;
+
+    case 4:
+      // readyStateDone       // Request complete, all data available.
+
+    	/*
+    	#define HTTPCODE_CONNECTION_REFUSED  (-1)
+		#define HTTPCODE_SEND_HEADER_FAILED  (-2)
+		#define HTTPCODE_SEND_PAYLOAD_FAILED (-3)
+		#define HTTPCODE_NOT_CONNECTED       (-4)
+		#define HTTPCODE_CONNECTION_LOST     (-5)
+		#define HTTPCODE_NO_STREAM           (-6)
+		#define HTTPCODE_NO_HTTP_SERVER      (-7)
+		#define HTTPCODE_TOO_LESS_RAM        (-8)
+		#define HTTPCODE_ENCODING            (-9)
+		#define HTTPCODE_STREAM_WRITE        (-10)
+		#define HTTPCODE_TIMEOUT             (-11)
+		*/
+    	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
+
+      break;
+  }
 }
 
 //Show real number for tokenID
