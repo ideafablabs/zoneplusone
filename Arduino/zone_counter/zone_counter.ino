@@ -23,7 +23,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ8
 
 WiFiClient client;
 ESP8266WiFiMulti wifiMulti;
-asyncHTTPrequest async;
+asyncHTTPrequest apiClient;
 AsyncWebServer server(80);
 
 long now,lastBlink,lastRead =0;
@@ -217,22 +217,22 @@ void setupWiFi() {
 
 // Async Setup.
 void setupClient() {
-  async.setTimeout(5);
-  async.setDebug(false);
-  async.onReadyStateChange(onClientStateChange);
+  apiClient.setTimeout(5);
+  apiClient.setDebug(false);
+  apiClient.onReadyStateChange(onClientStateChange);
 }
 
 void startAsyncRequest(String request, String params, String type){
     
 	logAction(type + " REQUEST: " + request + "?" + params);
     
-	if(async.readyState() == 0 || async.readyState() == 4){		
-		async.open(type.c_str(),request.c_str());
-		if (type == "POST") async.setReqHeader("Content-Type","application/x-www-form-urlencoded");
-		async.send(params);	
+	if(apiClient.readyState() == 0 || apiClient.readyState() == 4){		
+		apiClient.open(type.c_str(),request.c_str());
+		if (type == "POST") apiClient.setReqHeader("Content-Type","application/x-www-form-urlencoded");
+		apiClient.send(params);	
 	}
 }
-
+const char* PARAM_MESSAGE = "message";///
 void setupServer() {
 	
 	// Root / Home
@@ -243,9 +243,7 @@ void setupServer() {
 	server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request){
 		request->send(200, "text/plain", printLog());
 		// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
-	});
-
-	const char* PARAM_MESSAGE = "message";///
+	});	
 
 	// DEMO
 	// Send a GET request to <IP>/get?message=<message>
