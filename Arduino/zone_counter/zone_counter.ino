@@ -5,16 +5,14 @@
  * @contributors: Jordan Layman, David Van Brink, John Szymanski, Geoff Gnau, Tané Tachyon
  */
 
-#include <Adafruit_NeoPixel.h>
 #include <SPI.h>
 #include <Adafruit_PN532.h>
+#include <Adafruit_NeoPixel.h>
 
 #include <ESP8266WiFiMulti.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPClient.h>
 #include <ESPAsyncTCP.h>
 #include <asyncHTTPrequest.h>
+#include <ESPAsyncWebServer.h>
 #include "FS.h"
 
 // Setup Config.h by duplicating config-sample.h.
@@ -26,6 +24,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ8
 WiFiClient client;
 ESP8266WiFiMulti wifiMulti;
 asyncHTTPrequest async;
+AsyncWebServer server(80);
 
 long now,lastBlink,lastRead =0;
 uint16_t ledPeriod = 300; // ms
@@ -82,8 +81,9 @@ void setup() {
 
 	// Start the file system.
 	SPIFFS.begin();
+	setupServer();
 	setupClient();
-	
+
 	logAction("Booted Up");
 	// readLog();	
 	
@@ -233,6 +233,52 @@ void startAsyncRequest(String request, String params, String type){
 	}
 }
 
+void setupServer() {
+	
+	// Root / Home
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+	     request->send(200, "text/plain", printLog());
+	 });
+
+	server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request){
+		request->send(200, "text/plain", printLog());
+		// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
+	});
+
+	const char* PARAM_MESSAGE = "message";///
+
+	// DEMO
+	// Send a GET request to <IP>/get?message=<message>
+	server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+	    String message;
+	    if (request->hasParam(PARAM_MESSAGE)) {
+	        message = request->getParam(PARAM_MESSAGE)->value();
+	    } else {
+	        message = "No message sent";
+	    }
+	    request->send(200, "text/plain", "Hello, GET: " + message);
+	});
+
+	// DEMO
+   // Send a POST request to <IP>/post with a form field message set to <message>
+   server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
+       String message;
+       if (request->hasParam(PARAM_MESSAGE, true)) {
+           message = request->getParam(PARAM_MESSAGE, true)->value();
+       } else {
+           message = "No message sent";
+       }
+       request->send(200, "text/plain", "Hello, POST: " + message);
+   });
+   
+   server.onNotFound(notFound);
+   
+   server.begin();
+}
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+}
+
 // Return the 64 bit uid, with ZERO meaning nothing presently detected.
 nfcid_t pollNfc()
 {
@@ -256,7 +302,6 @@ nfcid_t pollNfc()
 		pollChar = '+'; //
 	}
 
-	
 	if (pollCount % 20 == 0)  // so the dots dont scroll right forever.
 		Serial.printf("\n%4d ", pollCount);
 	pollCount++;
@@ -286,25 +331,33 @@ void showAll(uint32_t color) {
 }
 
 // === Log Functions ===
-void readLog() {
+String printLog() {
 	
 	int xCnt = 0;
-  
+	String output;
+	
 	File f = SPIFFS.open(LOG_FILE, "r");
-  
+	
 	if (!f) {
-		Serial.println("file open failed");
-  	}  Serial.println("====== Reading from LOG_FILE =======");
+		output = "file open failed";
+		return output;
+	}
+
+	output = "====== Reading from LOG_FILE =======";
 
 	while(f.available()) {
-      //Lets read line by line from the file
-      String line = f.readStringUntil('\n');
-      Serial.print(xCnt);
-      Serial.print("  ");
-      Serial.println(line);
-      xCnt ++;
-    }
-    f.close();    
+	   //Lets read line by line from the file
+	   String line = f.readStringUntil('\n');
+	   // Serial.print(xCnt);
+	   // Serial.print("  ");
+	   // Serial.println(line);
+	   output += xCnt + "  " + line + "\n";
+
+	   xCnt ++;
+	}
+	f.close();    
+
+	return output;
 }
 
 void flushLog() {
