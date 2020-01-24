@@ -26,15 +26,14 @@ ESP8266WiFiMulti wifiMulti;
 asyncHTTPrequest apiClient;
 AsyncWebServer server(80);
 
-long now,lastBlink,lastRead =0;
+long now = 0;
+long lastBlink,lastRead,holdTime,holdStartTime = 0;
+
 uint16_t ledPeriod = 300; // ms
 uint16_t cardreaderPeriod = 500; // ms
 
 typedef uint32_t nfcid_t; // we treat the NFCs as 4 byte values throughout, for easiest.
 uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned TokenID
-uint8_t tokenIDLength;        // Length of the TokenID (4 or 7 bytes depending on ISO14443A card type)
-boolean tokenAcquired = false;
-boolean lastStatusCard1 = false;
 
 uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
 uint8_t color = 1;  // number between 1-255
@@ -98,32 +97,48 @@ void loop() {
 	// | Poll the NFC
 	static nfcid_t lastID = -1;
 	static nfcid_t tokenID = -1;
+	// static long holdStartTime,holdTime;
 
-	if (now >= lastRead + cardreaderPeriod) { // time for next poll?
+	if (now >= lastRead + cardreaderPeriod) { // Time for next card poll.
   
 		tokenID = pollNfc();
 	 	
 	 	if (tokenID != lastID) { // Detect change in card.
 	 			 		
-	 		if (tokenID != 0){
+	 		if (tokenID != 0){ // Card found.
 				logAction("Reader detected tokenID: " + (String)tokenID);
 
-				// reader state becomes active
+				// Reader state becomes active.
+				holdStartTime = now;
+				Serial.printf("Hold start time: %d", holdStartTime);
 
-
+				// Do initial hold action.
 				if (READER_ID) {									
 					registerToken(tokenID, READER_ID);
 				} else {
 					plusOneZone(tokenID, ZONE_ID);
-				}				
-			} else {				
-				// reader state becomes inactive.
+				}
 
+			} else { // Card was removed.
+				Serial.println("Card Removed.");
+				
+				// Reader state becomes inactive.
+				holdTime = 0;				
 			}
 			lastID = tokenID;
 		} else {
-			// increase hold timer.
+			
+			if (tokenID != 0) {
+				
+				// Increase hold timer.
+				holdTime = now - holdStartTime;
+				
+				// Do longer hold actions.
+				if (holdTime > 5000) {
+				    Serial.println("Held for 5s");
 
+				}
+			}
 		}
 		lastRead = now;
 	}
@@ -136,7 +151,7 @@ void loop() {
 			for(int i=0; i<NUM_LEDS; i++){
 				strip.setPixelColor(i, 0);
 			}
-			strip.setPixelColor(step % NUM_LEDS, 0x00FFFF);  
+			strip.setPixelColor(step % NUM_LEDS, 0x00FFFF);
 		} else {
 			for(int i=0; i<NUM_LEDS; i++){
 				strip.setPixelColor(i,0);
