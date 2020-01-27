@@ -10,10 +10,11 @@
 #include <Adafruit_NeoPixel.h>
 
 #include <ESP8266WiFiMulti.h>
-#include <ESPAsyncTCP.h>
-#include <asyncHTTPrequest.h>
-#include <ESPAsyncWebServer.h>
 #include "FS.h"
+// #include <FSWebServerLib.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <asyncHTTPrequest.h>
 
 // Setup Config.h by duplicating config-sample.h.
 #include "config.h"
@@ -21,12 +22,11 @@
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
 
-WiFiClient client;
 ESP8266WiFiMulti wifiMulti;
 asyncHTTPrequest apiClient;
 AsyncWebServer server(80);
 
-long now = 0;
+long noww = 0;
 long lastBlink,lastRead,holdTime,holdStartTime = 0;
 
 uint16_t ledPeriod = 300; // ms
@@ -50,27 +50,7 @@ void setup() {
 	strip.begin();
 	showAll(0xFF0000);
 
-	nfc.begin();
-	
-	uint32_t versiondata = nfc.getFirmwareVersion();
-	if (! versiondata) {
-		Serial.print("Didn't find PN53x board");
-		delay(1000); // wait a second and give it a go.
-    	ESP.restart();
-	}
-	// Got ok data, print it out!
-	Serial.print("Found chip PN532"); Serial.println((versiondata>>24) & 0xFF, HEX); 
-	Serial.print("Firmware ver. "); Serial.print((versiondata>>16) & 0xFF, DEC); 
-	Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
-
-	// Set the max number of retry attempts to read from a card
-	// This prevents us from waiting forever for a card, which is
-	// the default behaviour of the PN532.
-	nfc.setPassiveActivationRetries(0x01);
-
-	// Configure board to read RFID tags
-	nfc.SAMConfig();
-	Serial.println("NFC ready. Waiting for an ISO14443A card...");
+	setupNFC();	
 
 	showAll(0x0000FF);
 
@@ -81,6 +61,7 @@ void setup() {
 	// Start the file system.
 	SPIFFS.begin();
 	setupServer();
+	// ESPHTTPServer.begin(&SPIFFS);
 	setupClient();
 
 	logAction("Booted Up");
@@ -91,7 +72,7 @@ void setup() {
 void loop() {
 	
 	// Get time.
-	now = millis();
+	noww = millis();
 	
 	// +-------------------------
 	// | Poll the NFC
@@ -99,7 +80,7 @@ void loop() {
 	static nfcid_t tokenID = -1;
 	// static long holdStartTime,holdTime;
 
-	if (now >= lastRead + cardreaderPeriod) { // Time for next card poll.
+	if (noww >= lastRead + cardreaderPeriod) { // Time for next card poll.
   
 		tokenID = pollNfc();
 	 	
@@ -109,7 +90,7 @@ void loop() {
 				logAction("Reader detected tokenID: " + (String)tokenID);
 
 				// Reader state becomes active.
-				holdStartTime = now;
+				holdStartTime = noww;
 				Serial.printf("Hold start time: %d", holdStartTime);
 
 				// Do initial hold action.
@@ -131,7 +112,7 @@ void loop() {
 			if (tokenID != 0) {
 				
 				// Increase hold timer.
-				holdTime = now - holdStartTime;
+				holdTime = noww - holdStartTime;
 				
 				// Do longer hold actions.
 				if (holdTime > 5000) {
@@ -140,12 +121,12 @@ void loop() {
 				}
 			}
 		}
-		lastRead = now;
+		lastRead = noww;
 	}
 
 	// +-------------------------
 	// | Do LEDs.	
-	if (now >= lastBlink + ledPeriod) {
+	if (noww >= lastBlink + ledPeriod) {
 		
 		if (tokenID) {
 			for(int i=0; i<NUM_LEDS; i++){
@@ -166,9 +147,11 @@ void loop() {
 		step++;
 
 		// Update timer.
-		lastBlink = now;
+		lastBlink = noww;
 	}
 	
+	// Required by FSBrowser. Attend OTA update from Arduino IDE
+	// ESPHTTPServer.handle();
 }
 
 // https://github.com/boblemaire/asyncHTTPrequest
@@ -191,6 +174,7 @@ void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readySta
     case 4: // readyStateDone: Request complete, all data available.
 
     	// Log Response.
+    	/// We might want to store the response and check syncronously so log doesn't get chunked.
     	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
 
       break;
@@ -222,12 +206,37 @@ void setupWiFi() {
 	wifiMulti.addAP(SSID1, PASSWORD1);
 	wifiMulti.addAP(SSID2, PASSWORD2);
 
+	Serial.println("Wifi Connecting.");
 	while (wifiMulti.run() != WL_CONNECTED) {
-		Serial.println("WiFi not connected!");
+		Serial.println(".");
 		delay(1000);
 	} 
 	
 	logAction("WiFi connected to SSID: '"+WiFi.SSID()+"' @ "+WiFi.localIP().toString());
+}
+
+void setupNFC() {
+	nfc.begin();
+	
+	uint32_t versiondata = nfc.getFirmwareVersion();
+	if (! versiondata) {
+		Serial.print("Didn't find PN53x board");
+		delay(1000); // wait a second and give it a go.
+    	ESP.restart();
+	}
+	// Got ok data, print it out!
+	Serial.print("Found chip PN532"); Serial.println((versiondata>>24) & 0xFF, HEX); 
+	Serial.print("Firmware ver. "); Serial.print((versiondata>>16) & 0xFF, DEC); 
+	Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
+
+	// Set the max number of retry attempts to read from a card
+	// This prevents us from waiting forever for a card, which is
+	// the default behaviour of the PN532.
+	nfc.setPassiveActivationRetries(0x01);
+
+	// Configure board to read RFID tags
+	nfc.SAMConfig();
+	Serial.println("NFC ready. Waiting for an ISO14443A card...");
 }
 
 // Async Setup.
@@ -255,34 +264,40 @@ void setupServer() {
 	     request->send(200, "text/plain", printLog());
 	 });
 
-	server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request){
-		request->send(200, "text/plain", printLog());
-		// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
-	});	
+	// server.on("/log/", HTTP_GET, [](AsyncWebServerRequest *request){
+	// 	request->send(200, "text/plain", printLog());
+	// 	// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
+	// });	
 
-	// DEMO
-	// Send a GET request to <IP>/get?message=<message>
-	server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-	    String message;
-	    if (request->hasParam(PARAM_MESSAGE)) {
-	        message = request->getParam(PARAM_MESSAGE)->value();
-	    } else {
-	        message = "No message sent";
-	    }
-	    request->send(200, "text/plain", "Hello, GET: " + message);
-	});
+	// server.on("/log/flush", HTTP_GET, [](AsyncWebServerRequest *request){
+	// 	flushLog();
+	// 	request->send(200, "text/plain", "Log flushed.");
+	// 	// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
+	// });	
 
-	// DEMO
-   // Send a POST request to <IP>/post with a form field message set to <message>
-   server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
-       String message;
-       if (request->hasParam(PARAM_MESSAGE, true)) {
-           message = request->getParam(PARAM_MESSAGE, true)->value();
-       } else {
-           message = "No message sent";
-       }
-       request->send(200, "text/plain", "Hello, POST: " + message);
-   });
+	// // DEMO
+	// // Send a GET request to <IP>/get?message=<message>
+	// server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+	//     String message;
+	//     if (request->hasParam(PARAM_MESSAGE)) {
+	//         message = request->getParam(PARAM_MESSAGE)->value();
+	//     } else {
+	//         message = "No message sent";
+	//     }
+	//     request->send(200, "text/plain", "Hello, GET: " + message);
+	// });
+
+	// // DEMO
+ //   // Send a POST request to <IP>/post with a form field message set to <message>
+ //   server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
+ //       String message;
+ //       if (request->hasParam(PARAM_MESSAGE, true)) {
+ //           message = request->getParam(PARAM_MESSAGE, true)->value();
+ //       } else {
+ //           message = "No message sent";
+ //       }
+ //       request->send(200, "text/plain", "Hello, POST: " + message);
+ //   });
    
    server.onNotFound(notFound);
    
