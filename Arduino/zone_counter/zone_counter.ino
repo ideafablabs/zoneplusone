@@ -15,6 +15,7 @@
 #include "libraries/Adafruit_PN532/Adafruit_PN532.h"
 
 #include <ESP8266WiFiMulti.h>
+#include <ESP8266mDNS.h>
 #include <FS.h>
 
 // Setup Config.h by duplicating config-sample.h.
@@ -54,6 +55,7 @@ void setup() {
 	// LED Launch.
 	strip.setBrightness(BRIGHTNESS);
 	strip.begin();
+
 	showAll(0xFF0000);
 
 	setupNFC();	
@@ -207,9 +209,9 @@ void setupWiFi() {
 	wifiMulti.addAP(SSID1, PASSWORD1);
 	wifiMulti.addAP(SSID2, PASSWORD2);
 
-	Serial.println("Wifi Connecting.");
+	Serial.print("Wifi Connecting.");
 	while (wifiMulti.run() != WL_CONNECTED) {
-		Serial.println(".");
+		Serial.print(".");
 		delay(1000);
 	} 
 	
@@ -305,8 +307,15 @@ void setupServer() {
  //   });
    
    server.onNotFound(notFound);
-   
+  
    server.begin();
+
+   // Start the mDNS responder
+   if (!MDNS.begin(DNS_NAME)) { 
+		Serial.println("Error setting up MDNS responder!");
+	} else {
+		Serial.println("DNS Name: " + DNS_NAME);
+	}
 }
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Connected but not found");
