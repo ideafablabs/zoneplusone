@@ -9,36 +9,42 @@
 #include <Adafruit_PN532.h>
 #include <Adafruit_NeoPixel.h>
 
+// Onboard Libs
+#include "libraries/ESPAsyncWebServer/ESPAsyncWebServer.h"
+#include "libraries/asyncHTTPrequest/asyncHTTPrequest.h"
+#include "libraries/Adafruit_PN532/Adafruit_PN532.h"
+
 #include <ESP8266WiFiMulti.h>
-#include "FS.h"
-// #include <FSWebServerLib.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-#include <asyncHTTPrequest.h>
+#include <FS.h>
 
 // Setup Config.h by duplicating config-sample.h.
 #include "config.h"
 
-Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
+// Time
+long now = 0;
 
+//  NFC
+Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
+
+long lastRead,holdTime,holdStartTime = 0;
+uint16_t cardreaderPeriod = 500; // ms
+
+typedef uint32_t nfcid_t; // We treat the NFCs as 4 byte values throughout, for easiest.
+uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned TokenID
+
+// LED
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
+long lastBlink = 0;
+uint16_t ledPeriod = 300; // ms
+uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
+uint8_t color = 1;  // Number between 1-255
+uint8_t colorCase = 0;
+int step = 0 ;
+
+// Communications
 ESP8266WiFiMulti wifiMulti;
 asyncHTTPrequest apiClient;
 AsyncWebServer server(80);
-
-long noww = 0;
-long lastBlink,lastRead,holdTime,holdStartTime = 0;
-
-uint16_t ledPeriod = 300; // ms
-uint16_t cardreaderPeriod = 500; // ms
-
-typedef uint32_t nfcid_t; // we treat the NFCs as 4 byte values throughout, for easiest.
-uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned TokenID
-
-uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
-uint8_t color = 1;  // number between 1-255
-uint8_t colorCase = 0;
-int step = 0 ;
 
 void setup() {
 
@@ -58,10 +64,8 @@ void setup() {
 
 	showAll(0x00FF00);
 
-	// Start the file system.
-	SPIFFS.begin();
 	setupServer();
-	// ESPHTTPServer.begin(&SPIFFS);
+	
 	setupClient();
 
 	logAction("Booted Up");
@@ -72,7 +76,7 @@ void setup() {
 void loop() {
 	
 	// Get time.
-	noww = millis();
+	now = millis();
 	
 	// +-------------------------
 	// | Poll the NFC
@@ -80,7 +84,7 @@ void loop() {
 	static nfcid_t tokenID = -1;
 	// static long holdStartTime,holdTime;
 
-	if (noww >= lastRead + cardreaderPeriod) { // Time for next card poll.
+	if (now >= lastRead + cardreaderPeriod) { // Time for next card poll.
   
 		tokenID = pollNfc();
 	 	
@@ -90,7 +94,7 @@ void loop() {
 				logAction("Reader detected tokenID: " + (String)tokenID);
 
 				// Reader state becomes active.
-				holdStartTime = noww;
+				holdStartTime = now;
 				Serial.printf("Hold start time: %d", holdStartTime);
 
 				// Do initial hold action.
@@ -112,7 +116,7 @@ void loop() {
 			if (tokenID != 0) {
 				
 				// Increase hold timer.
-				holdTime = noww - holdStartTime;
+				holdTime = now - holdStartTime;
 				
 				// Do longer hold actions.
 				if (holdTime > 5000) {
@@ -121,12 +125,12 @@ void loop() {
 				}
 			}
 		}
-		lastRead = noww;
+		lastRead = now;
 	}
 
 	// +-------------------------
 	// | Do LEDs.	
-	if (noww >= lastBlink + ledPeriod) {
+	if (now >= lastBlink + ledPeriod) {
 		
 		if (tokenID) {
 			for(int i=0; i<NUM_LEDS; i++){
@@ -147,11 +151,8 @@ void loop() {
 		step++;
 
 		// Update timer.
-		lastBlink = noww;
+		lastBlink = now;
 	}
-	
-	// Required by FSBrowser. Attend OTA update from Arduino IDE
-	// ESPHTTPServer.handle();
 }
 
 // https://github.com/boblemaire/asyncHTTPrequest
@@ -256,8 +257,12 @@ void startAsyncRequest(String request, String params, String type){
 		apiClient.send(params);	
 	}
 }
+
 const char* PARAM_MESSAGE = "message";///
 void setupServer() {
+	
+	// Start the file system.
+	SPIFFS.begin();
 	
 	// Root / Home
 	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -304,7 +309,7 @@ void setupServer() {
    server.begin();
 }
 void notFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Not found");
+    request->send(404, "text/plain", "Connected but not found");
 }
 
 // Return the 64 bit uid, with ZERO meaning nothing presently detected.
