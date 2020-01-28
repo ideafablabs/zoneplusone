@@ -28,6 +28,14 @@
 }
 /*.nfc-wrapper*/
 
+/* Zone Dashboard */
+table.zonedata td {
+	padding:.5em;
+	/*background: red;*/
+	width: :100%;
+}
+
+/* Member Select List */ 
 table.member_select_list {
 	width:100%;
 	border-bottom:1px solid #000;

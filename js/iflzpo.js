@@ -36,7 +36,6 @@ $(document).ready( function(){
 				/// Gotta change this if we change the code. Find a new way!
 				var new_token = '<li>'+response.token_id+' <a class="remove-token icon" data-tid="'+response.token_id+'">x</a></li>';
 				$('tr.user-'+uid+' .user-tokens ul').append(new_token);
-				/// ADD EVENT HANDLER TO THIS. 
 
 				// $(target).parent('tr').children('.user-tokens ul')
 
@@ -95,24 +94,24 @@ $(document).ready( function(){
 
 	function ajaxRequest(package) {
 
-			$.ajax({
-					url : iflzpo_ajax.ajaxurl,
-					type : 'post',
-					data : {
-							action : 'async_controller',                
-							security : iflzpo_ajax.check_nonce, 
-							request : package.request,
-							package : package.data
-					},
-					success : function( json ) {                
-							// console.log(json);
-							var response = JSON.parse(json);
-							package.success(response);
-					},
-					error : function(jqXHR, textStatus, errorThrown) {
-							console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
-					}
-			});
+		$.ajax({
+			url : iflzpo_ajax.ajaxurl,
+			type : 'post',
+			data : {
+				action : 'async_controller',                
+				security : iflzpo_ajax.check_nonce, 
+				request : package.request,
+				package : package.data
+			},
+			success : function( json ) {                
+				// console.log(json);
+				var response = JSON.parse(json);
+				package.success(response);
+			},
+			error : function(jqXHR, textStatus, errorThrown) {
+				console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
+			}
+		});
 	}
 	/*
 	This makes an instant search for the gallery member sign-in list
