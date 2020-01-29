@@ -1,0 +1,8 @@
+(This is the sunset code-in-progress for adding to the functions.php theme functions file.)
+
+function iflzpo_sunset_function( $atts ) {
+	$IFLZonePlusOne = new IFLZonePlusOne();
+
+    return "Today's sunset is at " . $IFLZonePlusOne->whenIsSunsetToday();
+}
+add_shortcode( 'iflzpo_get_sunset', 'iflzpo_sunset_function' );
