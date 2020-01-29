@@ -14,15 +14,15 @@ include 'rest-api.php';
 
 global $wpdb;
 
-define("PLUGIN_TABLE_PREFIX", "iflzpo_");
+define("IFLZPO_TABLE_PREFIX", "iflzpo_");
 
-define("ZONE_TOKENS_TABLE_NAME", $wpdb->prefix . PLUGIN_TABLE_PREFIX . "zone_tokens");
+define("ZONE_TOKENS_TABLE_NAME", $wpdb->prefix . IFLZPO_TABLE_PREFIX . "zone_tokens");
 define("ZONE_TOKENS_DB_VERSION", "1.0");
 
-define("ZONES_TABLE_NAME", $wpdb->prefix . PLUGIN_TABLE_PREFIX . "zones");
+define("ZONES_TABLE_NAME", $wpdb->prefix . IFLZPO_TABLE_PREFIX . "zones");
 define("ZONES_DB_VERSION", "1.0");
 
-define("PLUS_ONE_ZONES_TABLE_NAME", $wpdb->prefix . PLUGIN_TABLE_PREFIX . "plus_one_zones");
+define("PLUS_ONE_ZONES_TABLE_NAME", $wpdb->prefix . IFLZPO_TABLE_PREFIX . "plus_one_zones");
 define("PLUS_ONE_ZONES_DB_VERSION", "1.0");
 
 /// Some day we might need some filesize management here.
