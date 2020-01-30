@@ -55,13 +55,13 @@ Class IFLZonePlusOne
         add_action('wp_ajax_ifl_sanity_check', array($this, 'ifl_sanity_check'));
         add_action('wp_ajax_nopriv_ifl_sanity_check', array($this, 'ifl_sanity_check'));
 
-        add_action('wp_ajax_async_controller', array($this, 'async_controller'));
-        add_action('wp_ajax_nopriv_async_controller', array($this, 'async_controller'));
+        add_action('wp_ajax_iflzpo_async_controller', array($this, 'iflzpo_async_controller'));
+        add_action('wp_ajax_nopriv_iflzpo_async_controller', array($this, 'iflzpo_async_controller'));
     }
 
     // Async Controller
     // Easiest Overview of AJAX Setup for WP: https://stackoverflow.com/questions/17982078/returning-json-data-with-ajax-in-wordpress
-    public function async_controller() { 
+    public function iflzpo_async_controller() { 
 
         // Switch on 'request' post var
         $request = (!empty($_POST['request'])) ? $_POST['request'] : false;
@@ -113,7 +113,7 @@ Class IFLZonePlusOne
                     $return['message'] = "No Token ID Found";
                     break;
                 } 
-                
+
                 // Get user ID because its currently necessary for deleting a zone token, /// kind of as a safeguard.
                 $user_id = $this->get_user_id_from_zone_token_id($token_id);
 
@@ -164,7 +164,7 @@ Class IFLZonePlusOne
             'manage_options',                   // Required Capability
             'plus_one_zones_menu_page',         // Menu Slug
             $admin_page_call,                   // Function
-            plugin_dir_path(__FILE__) . 'plus-icon.svg',  // Icon URL
+            'dashicons-plus',
             6
         ); 
 
@@ -332,7 +332,6 @@ Class IFLZonePlusOne
         echo $response;
 
     }
-
 
     public function manage_zone_names_page_call() {
         $emptyNameEntered = false;

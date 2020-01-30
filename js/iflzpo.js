@@ -50,7 +50,7 @@ $(document).ready( function(){
 		}
 
 		// Send the package ==>
-		ajaxRequest(package);
+		ifzpo_ajax_request(package);
 		
 	});
 
@@ -65,7 +65,7 @@ $(document).ready( function(){
 		package = {
 			request : 'remove_token',
 			data : {
-					tid : tid
+				tid : tid
 			}
 		}
 
@@ -88,23 +88,23 @@ $(document).ready( function(){
 		}
 
 		// Send the package ==>
-		ajaxRequest(package);
+		ifzpo_ajax_request(package);
 		
 	});
 
-	function ajaxRequest(package) {
+	function ifzpo_ajax_request(package) {
 
 		$.ajax({
 			url : iflzpo_ajax.ajaxurl,
 			type : 'post',
 			data : {
-				action : 'async_controller',                
+				action : 'iflzpo_async_controller',                
 				security : iflzpo_ajax.check_nonce, 
 				request : package.request,
 				package : package.data
 			},
 			success : function( json ) {                
-				// console.log(json);
+				console.log(json);
 				var response = JSON.parse(json);
 				package.success(response);
 			},
@@ -113,85 +113,77 @@ $(document).ready( function(){
 			}
 		});
 	}
+	
 	/*
 	This makes an instant search for the gallery member sign-in list
-			@jordan
-	*/
+	@jordan */
 	
 	// Setup to delay until user stops typing
 	var delay = (function(){
-			var timer = 0;
-			return function(callback, ms){
-					clearTimeout (timer);
-					timer = setTimeout(callback, ms);
-			};
+		var timer = 0;
+		return function(callback, ms){
+			clearTimeout (timer);
+			timer = setTimeout(callback, ms);
+		};
 	})();
 
 	//we want this function to fire whenever the user types in the search-box
 	$(".member_select_search #q").keyup(function () {
 			
-			delay(function(){
+		delay(function(){
 
-					$(".member_select_list").show();
+			$(".member_select_list").show();
 			
-					//first we create a variable for the value from the search-box
-					var searchTerm = $(".member_select_search #q").val();
+			//first we create a variable for the value from the search-box
+			var searchTerm = $(".member_select_search #q").val();
 
-					//then a variable for the list-items (to keep things clean)
-					var listItem = $('.member_select_list').children('tr');
-					
-					//extends the default :contains functionality to be case insensitive
-					//if you want case sensitive search, just remove this next chunk
-					$.extend($.expr[':'], {
-						'containsi': function(elem, i, match, array)
-						{
-							return (elem.textContent || elem.innerText || '').toLowerCase()
-							.indexOf((match[3] || "").toLowerCase()) >= 0;
-						}
-					});//end of case insensitive chunk
+			//then a variable for the list-items (to keep things clean)
+			var listItem = $('.member_select_list').children('tr');
+			
+			//extends the default :contains functionality to be case insensitive
+			//if you want case sensitive search, just remove this next chunk
+			$.extend($.expr[':'], {
+				'containsi': function(elem, i, match, array) {
+					return (elem.textContent || elem.innerText || '').toLowerCase()
+					.indexOf((match[3] || "").toLowerCase()) >= 0;
+				}
+			});//end of case insensitive chunk
 
+			// this part is optional:
+			// here we are replacing the spaces with another :contains
+			// what this does is to make the search less exact by searching all words and not full strings
+			var searchSplit = searchTerm.replace(/ /g, "'):containsi('")				
+			
+			//here is the meat. We are searching the list based on the search terms
+			$(".member_select_list tr").not(":containsi('" + searchSplit + "')").each(function(e)   {
+				//add a "hidden" class that will remove the item from the list
+				$(this).addClass('hidden');
+			});
+			
+			//this does the opposite -- brings items back into view
+			$(".member_select_list tr:containsi('" + searchSplit + "')").each(function(e) {
+				//remove the hidden class (reintroduce the item to the list)
+				$(this).removeClass('hidden');
+			});
 
-					//this part is optional
-					//here we are replacing the spaces with another :contains
-					//what this does is to make the search less exact by searching all words and not full strings
-					var searchSplit = searchTerm.replace(/ /g, "'):containsi('")
-					
-					
-					//here is the meat. We are searching the list based on the search terms
-					$(".member_select_list tr").not(":containsi('" + searchSplit + "')").each(function(e)   {
+			// SORT
+			var attendees = $('.member_select_list'), 
+				attendeesli = attendees.children('tr');
 
-								//add a "hidden" class that will remove the item from the list
-								$(this).addClass('hidden');
+			attendeesli.sort(function(a,b){
+				var an = a.getAttribute('data-sort').toLowerCase(),
+					bn = b.getAttribute('data-sort').toLowerCase();
 
-					});
-					
-					//this does the opposite -- brings items back into view
-					$(".member_select_list tr:containsi('" + searchSplit + "')").each(function(e) {
-
-								//remove the hidden class (reintroduce the item to the list)
-								$(this).removeClass('hidden');
-
-					});
-
-					// SORT
-					var attendees = $('.member_select_list'),
-					attendeesli = attendees.children('tr');
-
-					attendeesli.sort(function(a,b){
-							var an = a.getAttribute('data-sort').toLowerCase(),
-									bn = b.getAttribute('data-sort').toLowerCase();
-
-							if(an > bn) {
-									return 1;
-							}
-							if(an < bn) {
-									return -1;
-							}
-							return 0;
-					});
-
-
-			}, 500 );
+				if(an > bn) {
+					return 1;
+				}
+				if(an < bn) {
+					return -1;
+				}
+				return 0;
+			});
+			
+		}, 500 );
 	}); 
 
 	// Auto focus on the search box when we load.
