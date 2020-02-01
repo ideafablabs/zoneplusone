@@ -13,7 +13,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'add_token_id' ),
-				'permission_callback' => array( $this, 'get_items_permissions_check' )
+				'permission_callback' => array( $this, 'post_items_permissions_check' )
 			),
 
 		]);
@@ -36,7 +36,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'plus_one_zone' ),
-				'permission_callback' => array( $this, 'get_items_permissions_check' )
+				'permission_callback' => array( $this, 'post_items_permissions_check' )
 			),
 
 		]);
@@ -50,7 +50,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 
 		// Error Cases.
 		if (is_wp_error($zone_counts)) {
-			$IFLZonePlusOne->log($zone_counts);
+			$IFLZonePlusOne->log_action($zone_counts);
 			return $error;
 		}
 
@@ -69,7 +69,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 
 		// Error Cases.
 		if (is_wp_error($zone_count)) {
-			$IFLZonePlusOne->log($zone_count);
+			$IFLZonePlusOne->log_action($zone_count);
 			return $error;
 		}
 		
@@ -162,7 +162,52 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 		/// Do we need this? What can we check here?
 		return true;
 	}
+	public function post_items_permissions_check($request) {
+		/// Do we need this? What can we check here?
+		return true;
+	}
 }
+
+class MemberMouse_Controller extends WP_REST_Controller {
+	public function register_routes() {
+		$namespace = 'members/v1';        
+
+		register_rest_route( $namespace, '/active/', [
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_active_members' ),
+				'permission_callback' => array( $this, 'get_members_permissions_check' )
+				)			
+		]);
+
+		// We can add another API call for checking if a member is active without exposing anything. IF email, reply true or false.
+
+	}
+	public function get_active_members($request) {
+
+		global $IFLZonePlusOne;        
+
+		// Get array of all members that are active.
+		$active_members = $IFLZonePlusOne->get_list_of_active_membermouse_users();
+
+		// Error Cases.
+		if (is_wp_error($active_members)) {			
+			$IFLZonePlusOne->log_action($active_members);
+			return $error;
+		}		
+		// Success Case.
+		return new WP_REST_Response($zone_counts, 200);
+	}
+
+	public function get_members_permissions_check($request) {
+		
+		// $credentials = $request->get_param( 'credentials' );
+		/// check credentials before exposing member emails.
+
+		return true;
+	}
+}
+
 
 
 ?>

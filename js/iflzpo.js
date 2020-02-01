@@ -41,7 +41,7 @@ $(document).ready( function(){
 
 			// Or failure.
 			} else {                
-				var usermessage = '<p class="ajax-error">'+response.message+'</p>';                
+				var usermessage = '<p class="ajax-error error">'+response.message+'</p>';                
 			}
 
 			// Give some sort of affirmation...
@@ -92,27 +92,6 @@ $(document).ready( function(){
 		
 	});
 
-	function ifzpo_ajax_request(package) {
-
-		$.ajax({
-			url : iflzpo_ajax.ajaxurl,
-			type : 'post',
-			data : {
-				action : 'iflzpo_async_controller',                
-				security : iflzpo_ajax.check_nonce, 
-				request : package.request,
-				package : package.data
-			},
-			success : function( json ) {                
-				console.log(json);
-				var response = JSON.parse(json);
-				package.success(response);
-			},
-			error : function(jqXHR, textStatus, errorThrown) {
-				console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
-			}
-		});
-	}
 	
 	/*
 	This makes an instant search for the gallery member sign-in list
@@ -188,65 +167,40 @@ $(document).ready( function(){
 
 	// Auto focus on the search box when we load.
 	setTimeout(function(){
-			$(".member_select_search #q").focus();          
-	},0);
+		$(".member_select_search #q").focus();          
+	},50);
 
 	if ($(".nfc_button").length) {
-			reader_id = $(".nfc_button").attr('data-reader_id');        
-			setTimeout(ajax_get_token_id_from_reader(reader_id),3000);
+		reader_id = $(".nfc_button").attr('data-reader_id');        
+		setTimeout(ajax_get_token_id_from_reader(reader_id),3000);
 	}
 
 	// Clear search / hide attendee list.
 	$('.clear-search').on('click', function(e) { 
-			// document.getElementById('q').value = '';
-			$(".member_select_list tr").show(); //Debug: show all the members. 
+		// document.getElementById('q').value = '';
+		$(".member_select_list tr").show(); //Debug: show all the members. 
 	});
 
 });
 
-function ajax_get_token_id_from_reader(reader_id) {
-						
-		console.log("Getting Token from reader "+reader_id);                
-		//TODO Add loading graphic 
-		
-		$.ajax({
-				url : iflpm_ajax.ajax_url,            
-				type : 'get',
-				data : {
-						action : 'iflpm_get_token_from_reader',
-						reader_id : reader_id
-				},
-				
-				// security : iflpm_ajax.check_nonce,
-				success : function( response ) {
-						console.log("Success!");
-						console.log(response);
-						$('.token_id').html(response);            
-				}
-		});
-						
-}
+function ifzpo_ajax_request(package) {
 
-function ajax_associate_medallion_with_user(reader_id,user_id) {
-						
-		console.log("Associating Token with user "+user_id+" with reader: ");                
-		//TODO Add loading graphic 
-		
-		$.ajax({
-				url : iflpm_ajax.ajax_url,            
-				type : 'get',
-				data : {
-						action : 'iflpm_associate_user_with_token_from_reader',
-						reader_id : reader_id,
-						user_id : user_id
-				},
-				
-				// security : iflpm_ajax.check_nonce,
-				success : function( response ) {
-						console.log("Success!");
-						console.log(response);
-						$('.token-response').html(response);
-				}
-		});
-						
+	$.ajax({
+		url : iflzpo_ajax.ajaxurl,
+		type : 'post',
+		data : {
+			action : 'iflzpo_async_controller',                
+			security : iflzpo_ajax.check_nonce, 
+			request : package.request,
+			package : package.data
+		},
+		success : function( json ) {                
+			console.log(json);
+			var response = JSON.parse(json);
+			package.success(response);
+		},
+		error : function(jqXHR, textStatus, errorThrown) {
+			console.log(jqXHR + " :: " + textStatus + " :: " + errorThrown);
+		}
+	});
 }

@@ -1,3 +1,7 @@
 # Log Files
 logs/
 config.h
+
+#Mac Stuff
+Arduino/.DS_Store
+.DS_Store
