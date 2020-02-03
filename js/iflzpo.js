@@ -31,8 +31,7 @@ $(document).ready( function(){
 			
 			// Actual success.
 			if (response.success == true) {                
-				var usermessage = '<p class="ajax-success">'+response.message+'</p>';                
-					
+
 				/// Gotta change this if we change the code. Find a new way!
 				var new_token = '<li>'+response.token_id+' <a class="remove-token icon" data-tid="'+response.token_id+'">x</a></li>';
 				$('tr.user-'+uid+' .user-tokens ul').append(new_token);
@@ -41,11 +40,10 @@ $(document).ready( function(){
 
 			// Or failure.
 			} else {                
-				var usermessage = '<p class="ajax-error error">'+response.message+'</p>';                
 			}
 
 			// Give some sort of affirmation...
-			$(".ajax-message").html(usermessage);
+			$(".iflzpo-wrap").prepend(build_wp_notice(response).fadeIn());		
 			console.log(response.message);
 		}
 
@@ -73,18 +71,19 @@ $(document).ready( function(){
 		package.success = function(response) {            
 
 			// Actual success.
-			if (response.success == true) {
-				var usermessage = '<p class="ajax-success">'+response.message+'</p>';                
+			if (response.success == true) {				
 				$(target).parent('li').remove();                
 
 			// Or failure.
 			} else {                                
-				var usermessage = '<p class="ajax-error">'+response.message+'</p>';                
+				
 			}
 
-			// Give some sort of affirmation...
-			$(".ajax-message").html(usermessage);
+			// Give some sort of affirmation...			
+			$(".iflzpo-wrap").prepend(build_wp_notice(response).fadeIn());		
 			console.log(response.message);
+
+
 		}
 
 		// Send the package ==>
@@ -92,96 +91,128 @@ $(document).ready( function(){
 		
 	});
 
-	
-	/*
-	This makes an instant search for the gallery member sign-in list
-	@jordan */
-	
-	// Setup to delay until user stops typing
-	var delay = (function(){
-		var timer = 0;
-		return function(callback, ms){
-			clearTimeout (timer);
-			timer = setTimeout(callback, ms);
-		};
-	})();
-
-	//we want this function to fire whenever the user types in the search-box
-	$(".member_select_search #q").keyup(function () {
-			
-		delay(function(){
-
-			$(".member_select_list").show();
-			
-			//first we create a variable for the value from the search-box
-			var searchTerm = $(".member_select_search #q").val();
-
-			//then a variable for the list-items (to keep things clean)
-			var listItem = $('.member_select_list').children('tr');
-			
-			//extends the default :contains functionality to be case insensitive
-			//if you want case sensitive search, just remove this next chunk
-			$.extend($.expr[':'], {
-				'containsi': function(elem, i, match, array) {
-					return (elem.textContent || elem.innerText || '').toLowerCase()
-					.indexOf((match[3] || "").toLowerCase()) >= 0;
-				}
-			});//end of case insensitive chunk
-
-			// this part is optional:
-			// here we are replacing the spaces with another :contains
-			// what this does is to make the search less exact by searching all words and not full strings
-			var searchSplit = searchTerm.replace(/ /g, "'):containsi('")				
-			
-			//here is the meat. We are searching the list based on the search terms
-			$(".member_select_list tr").not(":containsi('" + searchSplit + "')").each(function(e)   {
-				//add a "hidden" class that will remove the item from the list
-				$(this).addClass('hidden');
-			});
-			
-			//this does the opposite -- brings items back into view
-			$(".member_select_list tr:containsi('" + searchSplit + "')").each(function(e) {
-				//remove the hidden class (reintroduce the item to the list)
-				$(this).removeClass('hidden');
-			});
-
-			// SORT
-			var attendees = $('.member_select_list'), 
-				attendeesli = attendees.children('tr');
-
-			attendeesli.sort(function(a,b){
-				var an = a.getAttribute('data-sort').toLowerCase(),
-					bn = b.getAttribute('data-sort').toLowerCase();
-
-				if(an > bn) {
-					return 1;
-				}
-				if(an < bn) {
-					return -1;
-				}
-				return 0;
-			});
-			
-		}, 500 );
-	}); 
+	// Activate filterable tables/lists
+	$("#q").on( 'keyup',
+		{
+			target:'.filterable',
+			children:'.filter-item'			
+		}
+		,filter); 
 
 	// Auto focus on the search box when we load.
 	setTimeout(function(){
 		$(".member_select_search #q").focus();          
 	},50);
 
-	if ($(".nfc_button").length) {
-		reader_id = $(".nfc_button").attr('data-reader_id');        
-		setTimeout(ajax_get_token_id_from_reader(reader_id),3000);
-	}
-
-	// Clear search / hide attendee list.
-	$('.clear-search').on('click', function(e) { 
-		// document.getElementById('q').value = '';
-		$(".member_select_list tr").show(); //Debug: show all the members. 
-	});
+	
 
 });
+
+/*
+ 	This makes an instant search filter.	
+ */
+if (typeof filter === "undefined") { 
+
+	function filter(event) {
+
+		delay(function(){
+			
+			$(event.data.target).show();
+			
+			// First we create a variable for the value from the search-box.
+			var searchTerm = $(event.target).val();
+
+			// Then a variable for the list-items (to keep things clean).
+			var listItem = $(event.data.target).children(event.data.children);
+			
+			// Extends the default :contains functionality to be case insensitive if you want case sensitive search, just remove this next chunk
+			$.extend($.expr[':'], {
+				'containsi': function(elem, i, match, array) {
+					return (elem.textContent || elem.innerText || '').toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
+				}
+			}); // End of case insensitive chunk.
+
+			// Optional
+			// Here we are replacing the spaces with another :contains
+			// What this does is to make the search less exact by searching all words and not full strings
+			var searchSplit = searchTerm.replace(/ /g, "'):containsi('")
+			
+			// Here is the meat. We are searching the list based on the search terms
+			$(event.data.target+" "+event.data.children).not(":containsi('" + searchSplit + "')").each(function(e)   {				  
+				  $(this).addClass('hidden');
+			});
+			
+			// This does the opposite -- brings items back into view
+			$(event.data.target+" "+event.data.children+":containsi('" + searchSplit + "')").each(function(e) {				  
+				$(this).removeClass('hidden');
+			});
+		
+		},500);
+	}
+}
+
+
+// Setup to delay until user stops typing
+var delay = (function(){
+	var timer = 0;
+	return function(callback, ms){
+		clearTimeout (timer);
+		timer = setTimeout(callback, ms);
+	};
+})();
+
+/// SORT saving this just in case.
+// var attendees = $('.member_select_list'), 
+// 	attendeesli = attendees.children('tr');
+
+// attendeesli.sort(function(a,b){
+// 	var an = a.getAttribute('data-sort').toLowerCase(),
+// 		bn = b.getAttribute('data-sort').toLowerCase();
+
+// 	if(an > bn) {
+// 		return 1;
+// 	}
+// 	if(an < bn) {
+// 		return -1;
+// 	}
+// 	return 0;
+// });
+
+
+// Build WP Notice box for admin AJAX actions.
+function build_wp_notice(response) {
+
+	// var testresponse = {
+	// 	message:'test message',
+	// 	notice : {
+	// 		level:'',
+	// 		display:true,
+	// 		dismissible:true			
+	// 	}
+	// }
+
+	if (!response.notice.display) return false;
+
+	var notice = $('<div class="notice hidden"></div>').addClass(response.notice.level); 
+	
+	var noticeMessage = document.createElement('p'); 
+	noticeMessage.innerText =response.message ;
+	
+	notice.append(noticeMessage);
+	
+	if (response.notice.dismissible) {		
+		var dismissbutton = $('<button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button>');
+		notice.append(dismissbutton);
+		notice.addClass('is-dismissible');
+
+		dismissbutton.on('click',function(e){			
+			$(e.target).parent('.notice').fadeOut();
+		})
+	}
+
+	return notice;
+}
+
 
 function ifzpo_ajax_request(package) {
 

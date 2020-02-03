@@ -25,9 +25,10 @@ define("ZONES_DB_VERSION", "1.0");
 define("PLUS_ONE_ZONES_TABLE_NAME", $wpdb->prefix . IFLZPO_TABLE_PREFIX . "plus_one_zones");
 define("PLUS_ONE_ZONES_DB_VERSION", "1.0");
 
-/// Some day we might need some filesize management here.
-define("ZONEPLUSONE_LOGFOLDER", plugin_dir_path(__FILE__) . "logs/");
-define("ZONEPLUSONE_LOGFILE", ZONEPLUSONE_LOGFOLDER . 'log.csv');
+define("IFLZPO_PLUGIN_PATH", plugin_dir_path(__FILE__));
+define("IFLZPO_VIEWS_PATH", IFLZPO_PLUGIN_PATH . "views/");
+define("IFLZPO_LOGFOLDER", plugin_dir_path(__FILE__) . "logs/");
+define("IFLZPO_LOGFILE", IFLZPO_LOGFOLDER . date('Y-m') . '-log.csv');
 
 $IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
@@ -107,7 +108,13 @@ Class IFLZonePlusOne
 		// Switch on 'request' post var
 		$request = (!empty($_POST['request'])) ? $_POST['request'] : false;
 		$package = (!empty($_POST['package'])) ? $_POST['package'] : false;
+		
 		$return['success'] = false;
+		$return['notice'] = array(
+			'display' => true, 
+			'dismissible' => true, 
+			'level' => '',
+		);
 		
 		switch ($request) {
 			case 'add_token':
@@ -200,7 +207,7 @@ Class IFLZonePlusOne
 			'Zone +1',                          	// Menu Title
 			'manage_options',                   	// Required Capability
 			'iflzpo_dashboard',         				// Menu Slug
-			array($this, 'admin_dashboard_page'),	// Function
+			array($this, 'admin_view_controller'),	// Function
 			'dashicons-plus',								// Icons
 			6
 		); 
@@ -209,82 +216,56 @@ Class IFLZonePlusOne
 			"Manage Zone Names",
 			"Manage Zone Names",
 			'manage_options',
-			"iflzpo_manage_zone_names_page",
-			array($this, 'manage_zone_names_page')
+			"iflzpo_manage_zones",
+			array($this, 'admin_view_controller')
 		);
 		add_submenu_page('iflzpo_dashboard',
 			"Manage User Tokens",
 			"Manage User Tokens",
 			'manage_options',
-			"iflzpo_manage_user_tokens_page",
-			array($this, 'manage_user_tokens_page')
-		);
-		add_submenu_page('iflzpo_dashboard',
-			"Assign token to user",
-			"Assign token to user",
-			'manage_options',
-			"assign_token_to_user_page",
-			array($this, 'assign_token_to_user_page')
-		);
+			"iflzpo_members",
+			array($this, 'admin_view_controller')
+		);		
 		add_submenu_page('iflzpo_dashboard',
 			"Settings",
 			"Settings",
 			'manage_options',
 			"ifzpo_settings",
-			array($this, 'settings_page')
+			array($this, 'admin_view_controller')
 		);
 	}
 
+	/**
+	 * Admin page controller. Pulls View template files.
+	 * @init action
+	 */
+	public function admin_view_controller() {
+		global $plugin_page, $wpdb;
+		$page_title = get_admin_page_title();
+
+		/// https://digwp.com/2016/05/wordpress-admin-notices/
+
+		switch ($plugin_page) {
+			case 'iflzpo_dashboard':
+				include IFLZPO_VIEWS_PATH . 'dashboard.inc.php';
+				break;			
+			case 'iflzpo_members':
+				include IFLZPO_VIEWS_PATH . 'member-manager.inc.php';
+				break;
+			case 'iflzpo_zones':
+				include IFLZPO_VIEWS_PATH . 'zones-manager.inc.php';
+				break;	
+			case 'iflzpo_settings':
+				include IFLZPO_VIEWS_PATH . 'settings.inc.php';
+				break;	
+			default:
+				# code...
+				break;
+		}
+
+	}
+
 	public function admin_dashboard_page() {
-		// Echo the html here...
-		$zonedata = $this->get_zone_plus_ones_array_for_dashboard();
-		// pr($zonedata);
-
-		echo '<table class="zonedata">
-				<tr>
-					<th>Zone</th>
-					<th>Total</th>
-					<th>Monthly</th>
-				</tr>';
-
-		foreach ($zonedata as $key => $value) {
-			echo '<tr>';
-			echo "<td>" . $value['zone_name'] . "</td>";
-			echo "<td>" . $value['this_month_plus_one_count'] . "</td>";
-			echo "<td>" . $value['total_plus_one_count'] . "</td>";
-			echo "</tr>";
-		}
-
-		echo "</table>";
-
-		echo "</br></br>TESTING!</br>";
-
-		pr(self::get_list_of_active_membermouse_users());
-		// $this->test_zone_tokens_table_stuff();
-		// $this->test_zones_table_stuff();
-		// $this->test_plus_one_zones_table_stuff();
-
-		// echo "</br>" . $this->get_zone_token_ids_by_user_id("3") . "</br>";
-		// echo "</br>" . $this->get_user_id_from_zone_token_id("1") . "</br>";
-
-		// Tests
-		$response = $this->add_zone_token_to_zone_tokens_table("1", "3");
-		if (is_wp_error($response)) {
-			errout($response->get_error_messages());
-		} else {
-			pr($response);
-		}
-
-		// echo "</br>" . $this->add_zone_to_zones_table("Electronics zone") . "</br>";
-
-//        echo "Testing zone token deletion\n";
-//        $response = $this->delete_zone_token("15796", "79");
-//        if (is_wp_error($response)) {
-//            pr("Error - " . $response->get_error_messages()[0]);
-//            errout($response->get_error_messages());
-//        } else {
-//            pr($response);
-//        }
 
 	}
 
@@ -861,7 +842,7 @@ Class IFLZonePlusOne
 		return $result[0]->zone_name;
 	}
 
-	public function get_zone_token_ids_by_user_id($user_id) {
+	public static function get_zone_token_ids_by_user_id($user_id) {
 		// if the user ID is in the tokens table, returns associated token ID(s) as ", "-separated string,
 		// otherwise returns an error message
 		global $wpdb;
@@ -1011,24 +992,24 @@ Class IFLZonePlusOne
 			$message = $item;
 		}
 
-		error_log($date . ", " . $message. "\n", 3, ZONEPLUSONE_LOGFILE);
+		error_log($date . ", " . $message. "\n", 3, IFLZPO_LOGFILE);
 		if ($echo) echo $message;
 	}
 
 	public static function check_log_file_exists() {
 
 		// Permissions?
-		if (!file_exists(ZONEPLUSONE_LOGFOLDER)) {
+		if (!file_exists(IFLZPO_LOGFOLDER)) {
 			try {
-				mkdir(ZONEPLUSONE_LOGFOLDER);
+				mkdir(IFLZPO_LOGFOLDER);
 			} catch (Exception $e) {
 				error_log($e->getMessage(), "\n");
 				return false;
 			}
 		}
-		if (!file_exists(ZONEPLUSONE_LOGFILE)) {
+		if (!file_exists(IFLZPO_LOGFILE)) {
 			try {
-				$logfile = file_put_contents(ZONEPLUSONE_LOGFILE, "\xEF\xBB\xBF",'');				
+				$logfile = file_put_contents(IFLZPO_LOGFILE, "\xEF\xBB\xBF",'');				
 			} catch (Exception $e) {
 				error_log($e->getMessage(), "\n");
 				return false;

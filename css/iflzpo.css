@@ -19,6 +19,7 @@
 	float: left;
 }
 .member_select_search .clear-search {
+	color:white;
 	font-size:2em;
 	width:18%;
 	margin-left:6px;
@@ -43,7 +44,7 @@ table.member_select_list {
 table.member_select_list tr {
 	
 }
-table.member_select_list tr:nth-child(odd) {
+table.member_select_list tr:nth-child(odd):not(.hidden) {
 	background: #DDD;
 }
 table.member_select_list th {
