@@ -499,19 +499,19 @@ Class IFLZonePlusOne
 		self::log_action("Plus one zones table created");
 	}
 
-	public function does_zones_table_exist_in_database() {
+	public static function does_zones_table_exist_in_database() {
 		return self::does_table_exist_in_database(ZONES_TABLE_NAME);
 	}
 
-	public function does_zone_tokens_table_exist_in_database() {
+	public static function does_zone_tokens_table_exist_in_database() {
 		return self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME);
 	}
 
-	public function does_plus_ones_zones_table_exist_in_database() {
+	public static function does_plus_ones_zones_table_exist_in_database() {
 		return self::does_table_exist_in_database(PLUS_ONE_ZONES_TABLE_NAME);
 	}
 
-	public function does_table_exist_in_database($table_name) {
+	public static function does_table_exist_in_database($table_name) {
 		global $wpdb;
 		$mytables = $wpdb->get_results("SHOW TABLES");
 		foreach ($mytables as $mytable) {
@@ -802,15 +802,15 @@ Class IFLZonePlusOne
 		}
 	}
 
-	public function is_user_id_in_database($user_id) {
+	public static function is_user_id_in_database($user_id) {
 		return get_user_by("ID", $user_id) != null;
 	}
 
-	public function get_user_id_from_zone_token_id($token_id) {
+	public static function get_user_id_from_zone_token_id($token_id) {
 		// if the token ID is in the tokens table, returns associated user ID as string,
 		// otherwise returns an error message
 		global $wpdb;
-		if (!$this->does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
+		if (!self::does_table_exist_in_database(ZONE_TOKENS_TABLE_NAME)) {
 			return new WP_Error('token-table-missing', "Zone tokens table does not exist in database");
 			// return "Error - zone tokens table does not exist in database";
 
