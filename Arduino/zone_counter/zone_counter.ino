@@ -35,12 +35,10 @@ uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned To
 
 // LED
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
-long lastBlink = 0;
-uint16_t ledPeriod = 300; // ms
-uint32_t colors[] = { 0xFF0000, 0xFFFF00, 0x00FF00, 0x0000FF };
-uint8_t color = 1;  // Number between 1-255
-uint8_t colorCase = 0;
 int step = 0 ;
+long lastBlink = 0;
+const uint16_t ledPeriod = 40; // ms 24fps
+uint32_t tokenColors[] = { 0x00FF00, 0xFFFF00, 0xFF0000, 0x0000FF, 0xFF00FF, 0xFFFFFF,  }; // Should be G Y R B (& secret purple)
 
 // Communications
 ESP8266WiFiMulti wifiMulti;
@@ -71,8 +69,7 @@ void setup() {
 	setupClient();
 
 	logAction("Booted Up");
-	// readLog();	
-	
+
 }
 
 void loop() {
@@ -123,7 +120,6 @@ void loop() {
 				// Do longer hold actions.
 				if (holdTime > 5000) {
 				    Serial.println("Held for 5s");
-
 				}
 			}
 		}
@@ -134,16 +130,27 @@ void loop() {
 	// | Do LEDs.	
 	if (now >= lastBlink + ledPeriod) {
 		
-		if (tokenID) {
-			for(int i=0; i<NUM_LEDS; i++){
-				strip.setPixelColor(i, 0);
-			}
-			strip.setPixelColor(step % NUM_LEDS, 0x00FFFF);
-		} else {
-			for(int i=0; i<NUM_LEDS; i++){
-				strip.setPixelColor(i,0);
-			}
-			strip.setPixelColor(step % NUM_LEDS, 0xFF00FF);
+		// Clear pixels.
+		for(int i=0; i<NUM_LEDS; i++){
+			strip.setPixelColor(i, 0);
+		}
+
+		// Default color.
+		uint32_t c = 0x00FFFF;	
+		
+		// if reader is being held.
+		if (holdTime) {
+			c = tokenColors[getTokenColor(tokenID)];
+		} 
+
+		uint8_t colormin = 10;
+		uint8_t colormax = 100-colormin;
+		// Color wave
+		uint8_t a = step % colormax;
+		if (a > colormax/2) a = colormax - a;
+			
+		for(int i=0; i<NUM_LEDS; i++){				
+			strip.setPixelColor(i, alpha(c,colormin+a));
 		}
 
 		// Let the magic happen.
@@ -155,6 +162,39 @@ void loop() {
 		// Update timer.
 		lastBlink = now;
 	}
+}
+
+// we think idcode is always even...
+// this is mostly because we read the little-endian id as if it were
+// big-endian and are getting kinda lucky. But this /2 mod5 thing works so ok for now. dvb 2019.
+uint8_t getTokenColor(nfcid_t uid)
+{
+	uid /= 2;
+	int flavor = uid % 5;
+	return flavor;
+}
+
+// Helpers to extract RGB from 32bit color.
+uint8_t extractRed(uint32_t c) { return (( c >> 16 ) & 0xFF); } 
+uint8_t extractGreen(uint32_t c) { return ( (c >> 8) & 0xFF ); } 
+uint8_t extractBlue(uint32_t c) { return ( c & 0xFF ); }
+
+uint32_t rgba(byte r, byte g, byte b, int a) {
+  
+  int rr = (r*a)/100;
+  int gg = (g*a)/100;
+  int bb = (b*a)/100;
+
+  return strip.Color(rr,gg,bb);
+}
+
+uint32_t alpha(uint32_t c, int a) {
+  
+  uint8_t r = extractRed(c);
+  uint8_t g = extractGreen(c);
+  uint8_t b = extractBlue(c);
+    
+  return rgba(r,g,b,a);
 }
 
 // https://github.com/boblemaire/asyncHTTPrequest
@@ -179,6 +219,8 @@ void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readySta
     	// Log Response.
     	/// We might want to store the response and check syncronously so log doesn't get chunked.
     	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
+
+    	/// This should probably be json so we can confirm respones types.
 
       break;
   }
@@ -244,9 +286,9 @@ void setupNFC() {
 
 // Async Setup.
 void setupClient() {
-  apiClient.setTimeout(5);
-  apiClient.setDebug(false);
-  apiClient.onReadyStateChange(onClientStateChange);
+	apiClient.setTimeout(5);
+	apiClient.setDebug(false);
+	apiClient.onReadyStateChange(onClientStateChange);
 }
 
 void startAsyncRequest(String request, String params, String type){
