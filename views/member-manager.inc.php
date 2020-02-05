@@ -58,7 +58,7 @@
 				<?php if (is_array($tokens)) {
 					echo  '<ul>';
 					foreach ($tokens as $key => $token_id) {					
-						echo '<li class="'.$token_class.'">'.$token_id.' <a class="remove-token icon" data-tid="'.$token_id.'">x</a></li>';
+						echo '<li class="token-"'.$token_id.'>'.$token_id.' <a class="remove-token icon" data-tid="'.$token_id.'">x</a></li>';
 					}
 					echo '</ul>';
 				} else {
