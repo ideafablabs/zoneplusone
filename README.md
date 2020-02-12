@@ -9,10 +9,8 @@ This plugin contained in zoneplusone.php creates three tables --
 -- and has many useful functions (and custom wp-admin menus) for working with the data/tables, including for the API in 
 `rest-api.php` to use when a member does a plus-one with their token.
 
+It also contains the `iflzpo_get_sunset` shortcode that the Dashboard page described below uses to get today's sunset time.
+
 A web site "Dashboard" page is in process that will among other things display the tool reservation calendar and issue 
 some kind of an alert every day at sunset (plus or minus some optimum-number-of-minutes offset, if that winds up being 
-a good idea) so that people can go outside to watch the sunset -- the file `for-dashboard-page.txt` contains the 
-WordPress source for that in-process page.
-
-The file `for-functions-php-theme-functions-file.txt` contains the sunset functionality shortcode-in-progress to be 
-added to the WordPress site's functions.php theme functions file.
+a good idea) so that people can go outside to watch the sunset.

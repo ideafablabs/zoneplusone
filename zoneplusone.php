@@ -73,9 +73,15 @@ Class IFLZonePlusOne
 		add_action('wp_ajax_nopriv_ifl_sanity_check', array($this, 'ifl_sanity_check'));
 
 		add_action('wp_ajax_iflzpo_async_controller', array($this, 'ajax_controller'));
-		add_action('wp_ajax_nopriv_iflzpo_async_controller', array($this, 'ajax_controller'));		
+		add_action('wp_ajax_nopriv_iflzpo_async_controller', array($this, 'ajax_controller'));
 
-		register_activation_hook( __FILE__, array($this, 'install_plugin'));		
+		add_shortcode('iflzpo_get_sunset', array($this, 'iflzpo_sunset_function'));
+
+		register_activation_hook( __FILE__, array($this, 'install_plugin'));
+	}
+
+	function iflzpo_sunset_function( $atts ) {
+		return "Today's sunset is at " . $this->whenIsSunsetToday();
 	}
 
 	public function get_list_of_active_membermouse_users() {
@@ -230,7 +236,7 @@ Class IFLZonePlusOne
 			"Settings",
 			"Settings",
 			'manage_options',
-			"ifzpo_settings",
+			"iflzpo_settings",
 			array($this, 'admin_view_controller')
 		);
 	}
