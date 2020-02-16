@@ -14,9 +14,16 @@
 #include "libraries/asyncHTTPrequest/asyncHTTPrequest.h"
 #include "libraries/Adafruit_PN532/Adafruit_PN532.h"
 
+#ifdef ESP32
+#include <WiFiMulti.h>
+#include <ESPmDNS.h>
+#include <SPIFFS.h>
+#else
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
+
+#endif
 
 // Setup Config.h by duplicating config-sample.h.
 #include "config.h"
@@ -25,13 +32,16 @@
 long now = 0;
 
 //  NFC
-Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
-
-long lastRead,holdTime,holdStartTime = 0;
-uint16_t cardreaderPeriod = 500; // ms
+// Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
+Adafruit_PN532 nfc(PN532_SS);
 
 typedef uint32_t nfcid_t; // We treat the NFCs as 4 byte values throughout, for easiest.
-uint8_t tokenID[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned TokenID
+long lastRead,holdTime,holdStartTime,successTime = 0;
+uint16_t cardreaderPeriod = 500; // ms
+uint16_t successPeriod = 3000; 	// ms
+
+enum readerState {RQ_STANDBY,RQ_PENDING,RQ_SUCCESS,RQ_FAILED};
+uint8_t state = RQ_STANDBY;
 
 // LED
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LEDPIN, NEO_GRB + NEO_KHZ800);
@@ -49,7 +59,7 @@ void setup() {
 
 	Serial.begin(115200);
 	Serial.println("Hello!");
-
+	
 	// LED Launch.
 	strip.setBrightness(BRIGHTNESS);
 	strip.begin();
@@ -69,6 +79,9 @@ void setup() {
 	setupClient();
 
 	logAction("Booted Up");
+
+	// printLog();
+	listFiles();
 
 }
 
@@ -98,10 +111,12 @@ void loop() {
 
 				// Do initial hold action.
 				if (READER_ID) {									
-					registerToken(tokenID, READER_ID);
+					// registerToken(tokenID, READER_ID);
+					registerMintToken(tokenID, READER_ID);
 				} else {
 					plusOneZone(tokenID, ZONE_ID);
 				}
+				state = RQ_PENDING;
 
 			} else { // Card was removed.
 				Serial.println("Card Removed.");
@@ -119,12 +134,22 @@ void loop() {
 				
 				// Do longer hold actions.
 				if (holdTime > 5000) {
-				    Serial.println("Held for 5s");
+				    // Serial.println("Held for "+holdTime);
 				}
 			}
 		}
 		lastRead = now;
 	}
+
+	// if (state == RQ_SUCCESS && now >= successTime + successPeriod) { 
+	// 	state == RQ_STANDBY;
+	// }
+	if (state >= RQ_SUCCESS && holdTime) {
+		// continue success notice...
+	}
+	else if (state >= RQ_SUCCESS && now >= successTime + successPeriod) { 
+		state = RQ_STANDBY;
+	}	
 
 	// +-------------------------
 	// | Do LEDs.	
@@ -137,10 +162,24 @@ void loop() {
 
 		// Default color.
 		uint32_t c = 0x00FFFF;	
-		
-		// if reader is being held.
-		if (holdTime) {
+	
+		if (state == RQ_FAILED) {
+			c = 0xFF0000;
+			if (step % 10) {
+				c = 0;
+			} 
+		} 
+
+		if (state == RQ_PENDING) {
 			c = tokenColors[getTokenColor(tokenID)];
+		} 
+
+		if (state == RQ_SUCCESS) {
+			c = 0xFFFFFF;
+			if (step % 10) {
+				c = 0;
+			} 
+			
 		} 
 
 		uint8_t colormin = 10;
@@ -218,7 +257,17 @@ void onClientStateChange(void * arguments, asyncHTTPrequest * aReq, int readySta
 
     	// Log Response.
     	/// We might want to store the response and check syncronously so log doesn't get chunked.
-    	logAction(aReq->responseHTTPcode()+" "+aReq->responseText());
+    	String rcode = (String)aReq->responseHTTPcode();
+    	logAction(rcode+" "+aReq->responseText());
+
+    	// request case here.
+    	if (aReq->responseHTTPcode() == 200) {
+    		state = RQ_SUCCESS;
+    		successTime = now;	
+    	} else {
+    		state = RQ_FAILED;
+    		successTime = now;
+    	}
 
     	/// This should probably be json so we can confirm respones types.
 
@@ -238,7 +287,16 @@ void plusOneZone(long tokenID, int zoneID) {
 void registerToken(long tokenID, int readerID) {
 	
 	String tokenString = String(tokenID);
-	String baseURI = API_BASE+API_ENDPOINT + "reader/";
+	String baseURI = API_BASE+API_ENDPOINT + "readers/";
+	String params = "token_id=" + tokenString;	
+
+	startAsyncRequest(baseURI,params,"POST");
+}
+
+void registerMintToken(long tokenID, int readerID) {
+	
+	String tokenString = String(tokenID);
+	String baseURI = API_BASE+API_ENDPOINT + "readers/"+ readerID;
 	String params = "token_id=" + tokenString;	
 
 	startAsyncRequest(baseURI,params,"POST");
@@ -261,6 +319,9 @@ void setupWiFi() {
 }
 
 void setupNFC() {
+
+	// digitalWrite(PN532_SS, HIGH);
+	
 	nfc.begin();
 	
 	uint32_t versiondata = nfc.getFirmwareVersion();
@@ -294,11 +355,14 @@ void setupClient() {
 void startAsyncRequest(String request, String params, String type){
     
 	logAction(type + " REQUEST: " + request + "?" + params);
-    
-	if(apiClient.readyState() == 0 || apiClient.readyState() == 4){		
-		apiClient.open(type.c_str(),request.c_str());
+    	
+	if(apiClient.readyState() == 0 || apiClient.readyState() == 4){ // Only one send at a time here.
+		apiClient.open(type.c_str(),request.c_str());		
 		if (type == "POST") apiClient.setReqHeader("Content-Type","application/x-www-form-urlencoded");
+		
 		apiClient.send(params);	
+	} else {
+		logAction("Request attempted but busy sending...Try again.");
 	}
 }
 
@@ -306,17 +370,26 @@ const char* PARAM_MESSAGE = "message";///
 void setupServer() {
 	
 	// Start the file system.
-	SPIFFS.begin();
+	if(!SPIFFS.begin()){
+		Serial.println("An Error has occurred while mounting SPIFFS");
+		return;
+  	}
 	
 	// Root / Home
-	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-	     request->send(200, "text/plain", printLog());
-	 });
+	// server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+	//      request->send(200, "text/plain", printLog());
+	//  });
 
-	// server.on("/log/", HTTP_GET, [](AsyncWebServerRequest *request){
-	// 	request->send(200, "text/plain", printLog());
-	// 	// request->send(SPIFFS, "/"+LOG_FILE, "text/plain");
-	// });	
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+		request->send(200, "text/plain", "fgkldsjklfgjklgfdljk");
+
+		// request->send(SPIFFS, LOG_FILE, "text/plain");
+	});
+
+	server.serveStatic("/log/", SPIFFS, LOG_FILE);
+	
+	AsyncStaticWebHandler& serveStatic(const char* uri, fs::FS& fs, const char* path, const char* cache_control = NULL);
+	
 
 	// server.on("/log/flush", HTTP_GET, [](AsyncWebServerRequest *request){
 	// 	flushLog();
@@ -442,6 +515,22 @@ String printLog() {
 	f.close();    
 
 	return output;
+}
+
+void listFiles() {
+
+	Dir dir = SPIFFS.openDir("/");
+	
+	Serial.println("Listing SPIFFS Files");
+	while (dir.next()) {
+		Serial.print("FILE: ");
+      Serial.println(dir.fileName());
+	   
+	   if(dir.fileSize()) {
+			File f = dir.openFile("r");
+			Serial.println(f.size());
+		}
+	}
 }
 
 void flushLog() {

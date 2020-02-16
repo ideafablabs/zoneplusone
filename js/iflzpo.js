@@ -48,7 +48,7 @@ $(document).ready( function(){
 		}
 
 		// Send the package ==>
-		ifzpo_ajax_request(package);
+		iflzpo_ajax_request(package);
 		
 	});
 
@@ -87,7 +87,7 @@ $(document).ready( function(){
 		}
 
 		// Send the package ==>
-		ifzpo_ajax_request(package);
+		iflzpo_ajax_request(package);
 		
 	});
 
@@ -214,7 +214,7 @@ function build_wp_notice(response) {
 }
 
 
-function ifzpo_ajax_request(package) {
+function iflzpo_ajax_request(package) {
 
 	$.ajax({
 		url : iflzpo_ajax.ajaxurl,
