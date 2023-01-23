@@ -5,3 +5,15 @@
 (The second block contains this shortcode for the sunset functionality.)
 
 [iflzpo_get_sunset]
+
+
+
+-=== This was taken from an existing page in the wp database, backed up here:
+
+<iframe style="border: solid 1px #777;" src="https://www.google.com/calendar/embed?showCalendars=0&amp;mode=DAY&amp;height=600&amp;wkst=1&amp;bgcolor=%23ffffff&amp;src=betaisfun.com_ocasjnpjbfkd6a0ta3k5ojtaho%40group.calendar.google.com&amp;color=%23711616&amp;ctz=America%2FLos_Angeles&amp;showTabs=0&amp;showCalendars=0&amp;showNav=0&amp;" frameborder="0" scrolling="no" width="1200" height="765"></iframe>
+
+<script type="text/javascript"><br />
+  setTimeout(function(){<br />
+    location = ''<br />
+  },200000)<br />
+</script>
