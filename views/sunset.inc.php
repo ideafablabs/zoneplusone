@@ -103,9 +103,9 @@
         }
         if (hour == 9 && min == 09) {
 			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','eightoheight');
+            document.body.setAttribute('class','nineohnine');
         } else {
-			document.body.classList.remove('eightoheight');
+			document.body.classList.remove('nineohnine');
         }
         if (hour == 11 && min == 11) {
 			//document.body.classList.add('eightthreeone');
@@ -169,7 +169,7 @@
             /* background-color:rgba(0, 0, 0, 0.3) */
             /* opacity: .4; */
         }
-        body.eightoheight {
+        body.eightoheight, body.nineohnine {
             background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/subwoofer-background.webp';?>') 0 ;
         }
         body.eleveneleven {
