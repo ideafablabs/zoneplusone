@@ -30,6 +30,9 @@ define("IFLZPO_VIEWS_PATH", IFLZPO_PLUGIN_PATH . "views/");
 define("IFLZPO_LOGFOLDER", plugin_dir_path(__FILE__) . "logs/");
 define("IFLZPO_LOGFILE", IFLZPO_LOGFOLDER . date('Y-m') . '-log.csv');
 
+define("IFLZPO_PLUGIN_URL", plugins_url( '/' , __FILE__ ));
+define("IFLZPO_VIEWS_URL", plugins_url( 'views/' , __FILE__ ));
+
 $IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
 
@@ -81,7 +84,10 @@ Class IFLZonePlusOne
 	}
 
 	function iflzpo_sunset_function( $atts ) {
-		return "Today's sunset is at " . $this->whenIsSunsetToday();
+		include IFLZPO_VIEWS_PATH . 'sunset.inc.php';
+	
+ 		die();
+		//return "Today's sunset is at " . $this->whenIsSunsetToday();
 	}
 
 	public function get_list_of_active_membermouse_users() {
@@ -1016,9 +1022,12 @@ Class IFLZonePlusOne
 	public function whenIsSunsetToday() {
 		// See https://catalog.data.gov/dataset/tsa-sunrise-sunset-times-api
 		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, "http://apps.tsa.dhs.gov/MyTSAWebService/GetEventInfo.ashx?eventtype=sunset&airportcode=SJC&output=json");
+		// 36.974117, -122.030792
+		curl_setopt($curl, CURLOPT_URL, "https://api.sunrise-sunset.org/json?lat=36.974117&lng=-122.030792&formatted=0&date=today");
+		// curl_setopt($curl, CURLOPT_URL, "http://apps.tsa.dhs.gov/MyTSAWebService/GetEventInfo.ashx?eventtype=sunset&airportcode=SJC&output=json");
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		$result = json_decode(curl_exec($curl), true)["Sunset"];
+		$result = json_decode(curl_exec($curl), true)["results"]["sunset"];
+
 		curl_close($curl);
 		return $result;
 	}
