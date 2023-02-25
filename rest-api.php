@@ -41,6 +41,7 @@ class ZonePlusOne_Controller extends WP_REST_Controller {
 
 		]);
 	}
+
 	public function get_all_zones($request) {
 
 		global $IFLZonePlusOne;        
@@ -196,7 +197,7 @@ class MemberMouse_Controller extends WP_REST_Controller {
 			return $error;
 		}		
 		// Success Case.
-		return new WP_REST_Response($zone_counts, 200);
+		return new WP_REST_Response($active_members, 200);
 	}
 
 	public function get_members_permissions_check($request) {

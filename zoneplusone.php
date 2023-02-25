@@ -85,26 +85,24 @@ Class IFLZonePlusOne
 	}
 
 	public function get_list_of_active_membermouse_users() {
+			
+		global $wpdb;
+
+		// MM User Status IDs
+		//	1 = Active
+		// 2 = cancelled
+		// 5 = Overdue
+		// 4 = Paused
+		// 9 = Pending Cancellation
+
+		$sql = "SELECT first_name, last_name FROM mm_user_data WHERE status = 1 OR status = 5 OR status = 9";
+
+		$result = $wpdb->get_results($sql);
+
+		// pr($result);
+
+		return (array) $result;
 		
-		if ($this->is_plugin_active("membermouse/membermouse.php")) {
-				
-			global $wpdb;
-
-			// MM User Status IDs
-			//	1 = Active
-			// 2 = cancelled
-			// 5 = Overdue
-			// 4 = Paused
-			// 9 = Pending Cancellation
-
-			$sql = "SELECT first_name, last_name, email FROM mm_user_data WHERE status = 1 OR status = 5 OR status = 9";
-
-			$result = $wpdb->get_results($sql);
-
-			pr($result);
-
-			return (array) $result;
-		}
 	}
 
 	// Async Controller
