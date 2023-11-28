@@ -1,22 +1,25 @@
 <div id="clock" ></div>
 <div id="sunclock" ></div>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script type="text/javascript">
     setInterval(showTime, 1000);
 
     let sunsetHour = 0;
     let sunsetMinute = 0;
     let sunsetNotification = 0;
+    let sunsetclock = document.getElementById("sunclock");
 
-    
     function getSunsetTime() {
         let sunsetTime = new Date();
+        
+        
+
         $.get('https://api.sunrise-sunset.org/json?lat=36.974117&lng=-122.030792&date=today&formatted=0',function(data,status) {
-            // console.log(data);
+            console.log(data);
             sunsetTime = new Date(data["results"]["sunset"]);
             sunsetHour = sunsetTime.getHours();
             sunsetMinute = sunsetTime.getMinutes();
-
 
             // Convert from Military Time
             if (sunsetHour > 12) {
@@ -28,13 +31,13 @@
 
             // hour = 8; min = 31;
 
-            sunsetHour = sunsetHour < 10 ? "" + hour : hour;
-            sunsetMinute = sunsetMinute < 10 ? "0" + min : min;
+            sunsetHour = sunsetHour < 10 ? "" + sunsetHour : sunsetHour;
+            sunsetMinute = sunsetMinute < 10 ? "0" + sunsetMinute : sunsetMinute;
             // sec = sec < 10 ? "0" + sec : sec;
 
             var sunsetclock = document.getElementById("sunclock");
-            // sunsetclock.innerHTML = "Sunset at " + sunsetHour + ":" + sunsetMinute;
-            sunsetclock.innerHTML =  sunsetHour + ":" + sunsetMinute;
+            sunsetclock.innerHTML = "Sunset at " + sunsetHour + ":" + sunsetMinute + " PM";
+            //sunsetclock.innerHTML =  sunsetHour + ":" + sunsetMinute;
         },'json');
         
     }
@@ -147,9 +150,9 @@
 
         }
 
-        
+        sunsetclock.innerHTML = "Sunset at " + sunsetHour + ":" + sunsetMinute;
     }
-    //getSunsetTime();
+    getSunsetTime();
     showTime();
     
     var snd = new Audio("https://santacruz.ideafablabs.com/wp-content/plugins/zoneplusone/css/Ring07.wav"); // buffers automatically when created
@@ -168,6 +171,7 @@
         }
         #sunclock {
             color:#eee;
+            float:right;   
         }
 		sup {
 			vertical-align:super;
