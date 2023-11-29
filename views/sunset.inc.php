@@ -9,17 +9,21 @@
     let sunsetMinute = 0;
     let sunsetNotification = 0;
     let sunsetclock = document.getElementById("sunclock");
+    
+    let currentTimeInMinutes = 0;
+    let sunsetTimeInMinutes = 0;
 
     function getSunsetTime() {
         let sunsetTime = new Date();
         
         
-
         $.get('https://api.sunrise-sunset.org/json?lat=36.974117&lng=-122.030792&date=today&formatted=0',function(data,status) {
             console.log(data);
             sunsetTime = new Date(data["results"]["sunset"]);
             sunsetHour = sunsetTime.getHours();
             sunsetMinute = sunsetTime.getMinutes();
+            sunsetTimeInMinutes = sunsetHour * 60 + sunsetMinute;
+
 
             // Convert from Military Time
             if (sunsetHour > 12) {
@@ -36,7 +40,7 @@
             // sec = sec < 10 ? "0" + sec : sec;
 
             var sunsetclock = document.getElementById("sunclock");
-            sunsetclock.innerHTML = "Sunset at " + sunsetHour + ":" + sunsetMinute + " PM";
+            sunsetclock.innerHTML = "Sunset: " + sunsetHour + ":" + sunsetMinute + " PM";
             //sunsetclock.innerHTML =  sunsetHour + ":" + sunsetMinute;
         },'json');
         
@@ -49,6 +53,10 @@
         let sec = time.getSeconds();
         am_pm = "AM";
         
+        // Calculate the total minutes for the current time and sunset time
+        currentTimeInMinutes = hour * 60 + min;
+        
+
         //console.log(time);
         //console.log(hour);
 
@@ -142,21 +150,24 @@
 			document.body.classList.remove('eleveneleven');
         }
 
-
-        if (time.getHours() == sunsetHour && min < sunsetMinute) {
-            document.body.setAttribute('class','sunset');
+        // if sunset is within 30 minutes, show the sunset notification
+        if (sunsetTimeInMinutes - currentTimeInMinutes <= 50 && currentTimeInMinutes < sunsetTimeInMinutes) {
+            //sunsetclock.style.display = "block";
+            document.body.classList.add('sunset');
         } else {
-			document.body.classList.remove('sunset');
-
+            sunsetclock.style.display = "none";
+            document.body.classList.remove('sunset');
         }
+        
 
-        sunsetclock.innerHTML = "Sunset at " + sunsetHour + ":" + sunsetMinute;
+
+        sunsetclock.innerHTML = "Sunset: " + sunsetHour + ":" + sunsetMinute + " PM";
     }
     getSunsetTime();
     showTime();
     
-    var snd = new Audio("https://santacruz.ideafablabs.com/wp-content/plugins/zoneplusone/css/Ring07.wav"); // buffers automatically when created
-    snd.play();
+    // var snd = new Audio("https://santacruz.ideafablabs.com/wp-content/plugins/zoneplusone/css/Ring07.wav"); // buffers automatically when created
+    // snd.play();
 </script>
     <style>
         #clock {
@@ -171,7 +182,8 @@
         }
         #sunclock {
             color:#eee;
-            float:right;   
+            float:right;
+            font-size: 1.5em;   
         }
 		sup {
 			vertical-align:super;
@@ -186,6 +198,10 @@
         }
         body #wrap {
             background:transparent;
+        }
+        body.sunset #clock {
+            color: orange;
+            border-color: orange;
         }
         body.fourohfour {
             background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/404-background.png';?>') no-repeat center center fixed ;
