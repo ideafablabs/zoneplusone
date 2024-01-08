@@ -38,9 +38,21 @@ $IFLZonePlusOne->run();
 
 Class IFLZonePlusOne
 {
-	private $mm_api_key,$mm_api_secret;
+	private $settings;
 
-	public function run($options = array()) {
+	//Default values if options doesn't exist yet.
+	private $default_settings = array(
+		'iflzpo_mm_api_key' => '',
+		'iflzpo_mm_api_secret' => '',
+		'iflzpo_token_reader_count' => 1,
+		'iflzpo_class_registration_active' => 0,
+		'iflzpo_referral_program_active' => 0,
+		'iflzpo_emergency_contacts_active' => 0,
+	);
+
+	public function run() {
+		
+		add_action('admin_init', array($this, 'load_settings'));
 
 		// Init Menu Pages
 		add_action('admin_menu', array($this, 'admin_menu_pages'));
@@ -83,11 +95,19 @@ Class IFLZonePlusOne
 		register_activation_hook( __FILE__, array($this, 'install_plugin'));
 	}
 
+	public function load_settings() {
+		$this->settings = get_option('iflzpo_settings', $this->default_settings);
+	}
+
+	public function update_settings(array $new_settings) {
+		$this->settings = array_merge($this->settings, $new_settings);
+		update_option('iflzpo_settings', $this->settings);
+	}
+
 	function iflzpo_sunset_function( $atts ) {
 		include IFLZPO_VIEWS_PATH . 'sunset.inc.php';
 	
  		die();
-		//return "Today's sunset is at " . $this->whenIsSunsetToday();
 	}
 
 	public function get_list_of_active_membermouse_users() {
