@@ -203,9 +203,6 @@ Class IFLZonePlusOne
 	public function ajax_nopriv_controller() {}
 
 	public function ifl_sanity_check() {
-
-		// echo "Sane?";
-		
 		// Always die in functions echoing Ajax content
 		wp_die('Sane!');
 	 }
@@ -968,7 +965,7 @@ Class IFLZonePlusOne
 		}
 		if (!file_exists(IFLZPO_LOGFILE)) {
 			try {
-				$logfile = file_put_contents(IFLZPO_LOGFILE, "\xEF\xBB\xBF",'');				
+				$logfile = file_put_contents(IFLZPO_LOGFILE, "\xEF\xBB\xBF",0);				
 			} catch (Exception $e) {
 				error_log($e->getMessage(), "\n");
 				return false;
