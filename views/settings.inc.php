@@ -2,6 +2,9 @@
 
 // Path: views/settings.inc.php
 
+require_once IFLZPO_PLUGIN_PATH . 'google-api-interactions.php';
+
+
 // if submit button is pressed
 if (isset($_POST['submit'])) {
 
@@ -107,5 +110,23 @@ $iflzpo_emergency_contacts_active = ($this->settings['iflzpo_emergency_contacts_
 	<p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes"></p>
 	
 </form>
+
+
+
+<?php 
+
+
+$d = array( 
+	'email' => 'jordan@ideafablabs.com',
+	'status_name' => 'Active',
+);
+
+try {
+	ifl_member_email_update($d);
+} catch (Exception $e) {
+	pr($e);
+}
+
+?>
 
 <?php include 'admin-footer.inc.php'; ?>

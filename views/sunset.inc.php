@@ -1,5 +1,6 @@
 <div id="clock" ></div>
 <div id="sunclock" ></div>
+<img id="sunset_img" src=""/>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -46,11 +47,14 @@
         
     }
     
+    let sunset_img_interval_id = '';
+
     function showTime() {
         let time = new Date();
         let hour = time.getHours();
         let min = time.getMinutes();
         let sec = time.getSeconds();
+        
         am_pm = "AM";
         
         // Calculate the total minutes for the current time and sunset time
@@ -82,6 +86,8 @@
         // hour = 8; min = 8;
        	// hour = 8; min = 31;
        	// hour = 11; min = 11;
+        // force sunset:  
+        currentTimeInMinutes = 1000;
 
         hour = hour < 10 ? "" + hour : hour;
         min = min < 10 ? "0" + min : min;
@@ -154,12 +160,31 @@
         if (sunsetTimeInMinutes - currentTimeInMinutes <= 50 && currentTimeInMinutes < sunsetTimeInMinutes) {
             //sunsetclock.style.display = "block";
             document.body.classList.add('sunset');
+            let sunset_img = 'https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
+            
+            // every 30 seconds update an sunset img tag with the current sunset image with timestamp.
+
+            
+            // if sunset interval is not already set, set it
+            if (sunset_img_interval_id == '1') {
+                sunset_img_interval_id = setInterval(function() {
+                    // document.getElementById('sunset_img').src = "x";
+                    document.getElementById('sunset_img').setAttribute('display','block');
+                    document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
+                }, 15000);
+            }
+
+            console.log(sunset_img_interval_id);
         } else {
-            sunsetclock.style.display = "none";
+            //sunsetclock.style.display = "none";
             document.body.classList.remove('sunset');
+            // unset sunset_img interval
+            sunset_img_interval_id = '';
+            clearInterval(sunset_img_interval_id);
+            document.getElementById('sunset_img').setAttribute('display','none');
         }
         
-
+        // https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot
 
         sunsetclock.innerHTML = "Sunset: " + sunsetHour + ":" + sunsetMinute + " PM";
     }
