@@ -12,6 +12,11 @@
 
 include 'rest-api.php';
 
+/// These are unintegrated.
+include 'class-registration-actions-hooks.php';
+include 'referral-program-actions-hooks.php';
+include 'emergency-contact-list-actions-hooks.php';
+
 global $wpdb;
 
 define("IFLZPO_TABLE_PREFIX", "iflzpo_");
@@ -32,6 +37,7 @@ define("IFLZPO_LOGFILE", IFLZPO_LOGFOLDER . date('Y-m') . '-log.csv');
 
 define("IFLZPO_PLUGIN_URL", plugins_url( '/' , __FILE__ ));
 define("IFLZPO_VIEWS_URL", plugins_url( 'views/' , __FILE__ ));
+
 
 $IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
@@ -70,14 +76,6 @@ Class IFLZonePlusOne
 
 		});
 
-		// 
-		// add_action('plugins_loaded', function () {
-		// 	if ($this->is_plugin_active("membermouse/membermouse.php")) {
-		// 		$this->mm_api_key = get_option('mm_api_key');
-		// 		$this->mm_api_secret = get_option('mm_api_secret');
-		// 	}
-		// });
-
 		// Enqueue plugin styles and scripts
 		add_action('admin_enqueue_scripts', array($this, 'register_iflzpo_scripts'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_iflzpo_scripts'));
@@ -95,10 +93,12 @@ Class IFLZonePlusOne
 		register_activation_hook( __FILE__, array($this, 'install_plugin'));
 	}
 
+	// Load the plugin settings.
 	public function load_settings() {
 		$this->settings = get_option('iflzpo_settings', $this->default_settings);
 	}
 
+	// Update the plugin settings.
 	public function update_settings(array $new_settings) {
 		$this->settings = array_merge($this->settings, $new_settings);
 		update_option('iflzpo_settings', $this->settings);
