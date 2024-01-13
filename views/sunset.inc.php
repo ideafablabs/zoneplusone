@@ -1,6 +1,28 @@
+<?php 
+/*
+define("IFLZPO_SUNSET_IMG_URL", IFLZPO_PLUGIN_URL . 'css/img/');
+
+// get all of the images from the folder and select one at random
+$images = glob(IFLZPO_PLUGIN_PATH . 'css/img/*.png');
+
+
+$image = array_rand($images);
+pr($image);
+// strip everything before the last slash
+$image = substr($image, strrpos($image, '/'));
+
+
+// <img src="<?php echo IFLZPO_SUNSET_IMG_URL . $image; ?>" alt="" />
+*/
+?>
+
+
+
 <div id="clock" ></div>
 <div id="sunclock" ></div>
 <img id="sunset_img" src=""/>
+
+
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -80,6 +102,7 @@
             am_pm = "AM";
         }
 
+        // hour = 12; min = 34;
         // hour = 4; min = 04;
         // hour = 4; min = 20;
         // hour = 6; min = 39;
@@ -87,7 +110,7 @@
        	// hour = 8; min = 31;
        	// hour = 11; min = 11;
         // force sunset:  
-        currentTimeInMinutes = 1000;
+        //currentTimeInMinutes = 1000;
 
         hour = hour < 10 ? "" + hour : hour;
         min = min < 10 ? "0" + min : min;
@@ -164,17 +187,22 @@
             
             // every 30 seconds update an sunset img tag with the current sunset image with timestamp.
 
-            
-            // if sunset interval is not already set, set it
-            if (sunset_img_interval_id == '1') {
-                sunset_img_interval_id = setInterval(function() {
-                    // document.getElementById('sunset_img').src = "x";
-                    document.getElementById('sunset_img').setAttribute('display','block');
-                    document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
-                }, 15000);
+            // if currentTimeinSeconds is within 30 seconds of the next minute, update the image
+            if (sec >= 30 && sec <= 59) {
+                document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
+                document.getElementById('sunset_img').setAttribute('display','block');
             }
 
-            console.log(sunset_img_interval_id);
+            // // if sunset interval is not already set, set it
+            // if (sunset_img_interval_id == '1') {
+            //     sunset_img_interval_id = setInterval(function() {
+            //         // document.getElementById('sunset_img').src = "x";
+            //         document.getElementById('sunset_img').setAttribute('display','block');
+            //         document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
+            //     }, 15000);
+            // }
+
+            // console.log(sunset_img_interval_id);
         } else {
             //sunsetclock.style.display = "none";
             document.body.classList.remove('sunset');
