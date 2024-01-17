@@ -20,7 +20,7 @@ $image = substr($image, strrpos($image, '/'));
 
 <div id="clock" ></div>
 <div id="sunclock" ></div>
-<img id="sunset_img" src=""/>
+<img id="sunset_img" src="" />
 
 
 
@@ -188,7 +188,7 @@ $image = substr($image, strrpos($image, '/'));
             // every 30 seconds update an sunset img tag with the current sunset image with timestamp.
 
             // if currentTimeinSeconds is within 30 seconds of the next minute, update the image
-            if (sec >= 30 && sec <= 59) {
+            if (sec % 10 == 0) {
                 document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
                 document.getElementById('sunset_img').setAttribute('display','block');
             }
@@ -238,6 +238,14 @@ $image = substr($image, strrpos($image, '/'));
             float:right;
             font-size: 1.5em;   
         }
+        #sunset_img {
+            position: fixed;
+            top:0;
+            left:0;
+            height:100%;
+            border-radius: 8px;
+            z-index: -3;
+        }
 		sup {
 			vertical-align:super;
 			font-size: .5em;
@@ -271,7 +279,7 @@ $image = substr($image, strrpos($image, '/'));
             box-shadow:none;
         }
         body.fourtwenty {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background.jpg';?>') no-repeat center center fixed ;
+            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-2.png';?>') no-repeat center center fixed ;
         }
         body.onetwothreefour {
             background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/1234-background.png';?>') no-repeat center center fixed;
