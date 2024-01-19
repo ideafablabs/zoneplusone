@@ -32,6 +32,7 @@ $image = substr($image, strrpos($image, '/'));
     let sunsetMinute = 0;
     let sunsetNotification = 0;
     let sunsetclock = document.getElementById("sunclock");
+    let sunset_img = document.getElementById("sunset_img")
     
     let currentTimeInMinutes = 0;
     let sunsetTimeInMinutes = 0;
@@ -181,35 +182,21 @@ $image = substr($image, strrpos($image, '/'));
 
         // if sunset is within 30 minutes, show the sunset notification
         if (sunsetTimeInMinutes - currentTimeInMinutes <= 50 && currentTimeInMinutes < sunsetTimeInMinutes) {
-            //sunsetclock.style.display = "block";
+            sunset_img.style.display = "block";
             document.body.classList.add('sunset');
-            let sunset_img = 'https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
+            let sunset_img_src = 'https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
             
-            // every 30 seconds update an sunset img tag with the current sunset image with timestamp.
-
-            // if currentTimeinSeconds is within 30 seconds of the next minute, update the image
+            // if currentTimeinSeconds is within 10 seconds of the next minute, update the image
             if (sec % 10 == 0) {
-                document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
-                document.getElementById('sunset_img').setAttribute('display','block');
+                sunset_img.src = sunset_img_src + '?t=' + new Date().getTime();
+                sunset_img.setAttribute('display','block');
             }
 
-            // // if sunset interval is not already set, set it
-            // if (sunset_img_interval_id == '1') {
-            //     sunset_img_interval_id = setInterval(function() {
-            //         // document.getElementById('sunset_img').src = "x";
-            //         document.getElementById('sunset_img').setAttribute('display','block');
-            //         document.getElementById('sunset_img').src = sunset_img + '?t=' + new Date().getTime();
-            //     }, 15000);
-            // }
-
-            // console.log(sunset_img_interval_id);
         } else {
-            //sunsetclock.style.display = "none";
+            sunset_img.style.display = 'none';
             document.body.classList.remove('sunset');
-            // unset sunset_img interval
-            sunset_img_interval_id = '';
-            clearInterval(sunset_img_interval_id);
-            document.getElementById('sunset_img').setAttribute('display','none');
+            
+            //document.getElementById('sunset_img').setAttribute('display','none');
         }
         
         // https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot
