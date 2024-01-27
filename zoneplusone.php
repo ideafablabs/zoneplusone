@@ -54,6 +54,7 @@ Class IFLZonePlusOne
 		'iflzpo_class_registration_active' => 0,
 		'iflzpo_referral_program_active' => 0,
 		'iflzpo_emergency_contacts_active' => 0,
+		'iflzpo_mm_api_call_url' => '',
 	);
 
 	public function run() {
@@ -107,7 +108,7 @@ Class IFLZonePlusOne
 	function iflzpo_sunset_function( $atts ) {
 		include IFLZPO_VIEWS_PATH . 'sunset.inc.php';
 	
- 		die();
+ 		//die();
 	}
 
 	public function get_list_of_active_membermouse_users() {

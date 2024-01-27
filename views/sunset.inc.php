@@ -110,8 +110,9 @@ $image = substr($image, strrpos($image, '/'));
         // hour = 8; min = 8;
        	// hour = 8; min = 31;
        	// hour = 11; min = 11;
-        // force sunset:  
-        //currentTimeInMinutes = 1000;
+        
+		// force sunset:  
+        //currentTimeInMinutes = sunsetTimeInMinutes - 4;
 
         hour = hour < 10 ? "" + hour : hour;
         min = min < 10 ? "0" + min : min;
@@ -216,7 +217,7 @@ $image = substr($image, strrpos($image, '/'));
             text-align: center;
             border: 2px solid #eee;
             border-radius: 16px;
-            margin-top:1em;
+            margin-top:15rem;
             box-shadow: 2px 2px 5px 0px black;
             text-shadow:2px 2px 5px black;
         }
@@ -234,7 +235,7 @@ $image = substr($image, strrpos($image, '/'));
             z-index: -3;
         }
 		sup {
-			vertical-align:super;
+			vertical-align:0.2em;
 			font-size: .5em;
 		}
         h1 {display:none;}
@@ -244,8 +245,11 @@ $image = substr($image, strrpos($image, '/'));
             /* background-image: linear-gradient(to bottom right, black, gray); */
             /* background-attachment: fixed; */
         }
-        body #wrap {
+        body #wrap, .content-bg, body.content-style-unboxed .site {
             background:transparent;
+        }
+        body .content-container {
+            max-width: 960px;
         }
         body.sunset #clock {
             color: orange;
