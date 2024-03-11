@@ -181,8 +181,8 @@ $image = substr($image, strrpos($image, '/'));
 			document.body.classList.remove('eleveneleven');
         }
 
-        // if sunset is within 30 minutes, show the sunset notification
-        if (sunsetTimeInMinutes - currentTimeInMinutes <= 50 && currentTimeInMinutes < sunsetTimeInMinutes) {
+        // if current time is 50 minutes before or 30 minutes after sunset, show the sunset notification
+        if (currentTimeInMinutes >= sunsetTimeInMinutes - 120 && currentTimeInMinutes <= sunsetTimeInMinutes + 30) {
             sunset_img.style.display = "block";
             document.body.classList.add('sunset');
             let sunset_img_src = 'https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
@@ -270,7 +270,7 @@ $image = substr($image, strrpos($image, '/'));
             box-shadow:none;
         }
         body.fourtwenty {
-            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-2.png';?>');
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-3.png';?>');
         }
         body.onetwothreefour {
             background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/1234-background.png';?>');          
