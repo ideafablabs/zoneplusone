@@ -243,10 +243,14 @@ $image = substr($image, strrpos($image, '/'));
             background:#222;
             background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/texture-background.gif';?>') no-repeat center center fixed ;
             /* background-image: linear-gradient(to bottom right, black, gray); */
-            /* background-attachment: fixed; */
+            background-size: cover;
+        
         }
         body #wrap, .content-bg, body.content-style-unboxed .site {
             background:transparent;
+        }
+        body .entry-content-wrap {
+            padding:0;
         }
         body .content-container {
             max-width: 960px;
@@ -256,11 +260,7 @@ $image = substr($image, strrpos($image, '/'));
             border-color: orange;
         }
         body.fourohfour {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/404-background.png';?>') no-repeat center center fixed ;
-            -webkit-background-size: cover;
-            -moz-background-size: cover;
-            -o-background-size: cover;
-            background-size: cover;    
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/404-background.png';?>');
         }
         body.fourohfour #clock {
             font-family: 'Comic Sans MS', cursive;
@@ -270,22 +270,15 @@ $image = substr($image, strrpos($image, '/'));
             box-shadow:none;
         }
         body.fourtwenty {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-2.png';?>') no-repeat center center fixed ;
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-2.png';?>');
         }
         body.onetwothreefour {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/1234-background.png';?>') no-repeat center center fixed;
-            -webkit-background-size: cover;
-            -moz-background-size: cover;
-            -o-background-size: cover;
-            background-size: cover;             
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/1234-background.png';?>');          
         }
 
         body.sixthreenine {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/solfeggio-background.jpg';?>') no-repeat center center fixed;
-            -webkit-background-size: cover;
-            -moz-background-size: cover;
-            -o-background-size: cover;
-            background-size: cover;             
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/solfeggio-background.jpg';?>');
+            
         }
         body.sixthreenine #clock {
             color:#000;
@@ -294,7 +287,7 @@ $image = substr($image, strrpos($image, '/'));
             box-shadow:none;
         }
 		body.eightthreeone {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/santacruz-background.jpg';?>') no-repeat center center fixed ;
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/santacruz-background.jpg';?>') ;
         }
         body.eightthreeone #clock {
 			color:#000;
@@ -304,10 +297,10 @@ $image = substr($image, strrpos($image, '/'));
             /* opacity: .4; */
         }
         body.eightoheight, body.nineohnine {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/subwoofer-background.webp';?>') no-repeat center center fixed ;
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/subwoofer-background.webp';?>');
         }
         body.eleveneleven {
-            background: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/cosmos-background.jpg';?>') no-repeat center center fixed ;
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/cosmos-background.jpg';?>');
         }
         html,body {
             height:inherit;
