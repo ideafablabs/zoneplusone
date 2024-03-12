@@ -108,7 +108,7 @@ Class IFLZonePlusOne
 	function iflzpo_sunset_function( $atts ) {
 		include IFLZPO_VIEWS_PATH . 'sunset.inc.php';
 	
- 		//die();
+ 	 	die();
 	}
 
 	public function get_list_of_active_membermouse_users() {
