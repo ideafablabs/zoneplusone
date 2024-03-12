@@ -87,8 +87,8 @@ $image = substr($image, strrpos($image, '/'));
         //console.log(time);
         //console.log(hour);
 
-        // reload at midnight.
-        if (hour == 0 && min == 0 && sec < 7) location.reload();
+        // reload at 3am. (midnight was conflicting with processes and timing out on the server.)
+        if (hour == 3 && min == 0 && sec < 7) location.reload();
 
         // Convert from Military Time
         if (hour > 12) {
