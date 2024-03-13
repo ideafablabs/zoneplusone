@@ -262,7 +262,8 @@ $image = substr($image, strrpos($image, '/'));
         body.fourohfour {
             background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/404-background.png';?>');
         }
-        body.fourohfour #clock {
+        body.fourohfour #clock, body.fourohfour #sunclock {
+            display:none;
             font-family: 'Comic Sans MS', cursive;
             color:#000;
             text-shadow:1px 1px white;
