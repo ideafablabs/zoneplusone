@@ -14,6 +14,21 @@ $image = substr($image, strrpos($image, '/'));
 
 // <img src="<?php echo IFLZPO_SUNSET_IMG_URL . $image; ?>" alt="" />
 */
+
+// Choose an image from an array of images
+$fourtwenty_images = array(
+    'weed-wizard1.png',
+    'weed-wizard2.png',
+    'weed-wizard3.png',
+    // 'fourtwenty-background.jpg',
+    // 'fourtwenty-background-1.jpg',
+    // 'fourtwenty-background-2.png',
+    // 'fourtwenty-background-3.png',
+    // 'fourtwenty-background-4.png',
+);
+
+$fourtwenty_image = $fourtwenty_images[array_rand($fourtwenty_images)];
+
 ?>
 
 
@@ -271,7 +286,7 @@ $image = substr($image, strrpos($image, '/'));
             box-shadow:none;
         }
         body.fourtwenty {
-            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/fourtwenty-background-3.png';?>');
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/'. $fourtwenty_image;?>');
         }
         body.onetwothreefour {
             background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/1234-background.png';?>');          
