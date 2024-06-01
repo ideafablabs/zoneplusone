@@ -20,14 +20,25 @@ $fourtwenty_images = array(
     'weed-wizard1.png',
     'weed-wizard2.png',
     'weed-wizard3.png',
-    // 'fourtwenty-background.jpg',
-    // 'fourtwenty-background-1.jpg',
-    // 'fourtwenty-background-2.png',
-    // 'fourtwenty-background-3.png',
-    // 'fourtwenty-background-4.png',
+    'fourtwenty-background.jpg',
+    'fourtwenty-background-1.jpg',
+    'fourtwenty-background-2.png',
+    'fourtwenty-background-3.png',
+    'fourtwenty-background-4.png',
+    'weed-field1.png',
+    'weed-field2.png',
 );
 
 $fourtwenty_image = $fourtwenty_images[array_rand($fourtwenty_images)];
+
+$taco_images = array(
+    'taco-background1.png',
+    'taco-background2.png',
+    'taco-background3.png',
+    'taco-background4.png',
+);
+
+$taco_image = $taco_images[array_rand($taco_images)];
 
 ?>
 
@@ -119,6 +130,7 @@ $fourtwenty_image = $fourtwenty_images[array_rand($fourtwenty_images)];
         }
 
         // hour = 12; min = 34;
+        // hour = 1; min = 24;
         // hour = 4; min = 04;
         // hour = 4; min = 20;
         // hour = 6; min = 39;
@@ -213,6 +225,13 @@ $fourtwenty_image = $fourtwenty_images[array_rand($fourtwenty_images)];
             document.body.classList.remove('sunset');
             
             //document.getElementById('sunset_img').setAttribute('display','none');
+        }
+
+        // if the day is Friday and the time is between 1:00pm and 2:30pm, show the taco notification
+        if (time.getDay() == 5 && hour == 1 && min >= 0 && min <= 59 && am_pm == "PM") {
+            document.body.classList.add('taco');   
+        } else {
+            document.body.classList.remove('taco');
         }
         
         // https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot
@@ -317,6 +336,9 @@ $fourtwenty_image = $fourtwenty_images[array_rand($fourtwenty_images)];
         }
         body.eleveneleven {
             background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/cosmos-background.jpg';?>');
+        }
+        body.taco {
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/'. $taco_image;?>');
         }
         html,body {
             height:inherit;
