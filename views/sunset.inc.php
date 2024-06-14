@@ -109,7 +109,6 @@ $taco_image = $taco_images[array_rand($taco_images)];
         // Calculate the total minutes for the current time and sunset time
         currentTimeInMinutes = hour * 60 + min;
         
-
         //console.log(time);
         //console.log(hour);
 
@@ -141,18 +140,9 @@ $taco_image = $taco_images[array_rand($taco_images)];
 		// force sunset:  
         //currentTimeInMinutes = sunsetTimeInMinutes - 4;
 
-        hour = hour < 10 ? "" + hour : hour;
-        min = min < 10 ? "0" + min : min;
-        sec = sec < 10 ? "0" + sec : sec;
-
         if (hour == 4 && min == 21 && sec <= 9) {
             hour = 4; min = 20;sec = 60+Number(sec);
         }
-
-        let currentTime = hour + ":" + min + "<sup>:"+ sec + "</sup>" + am_pm;
-
-        var clock = document.getElementById("clock");
-        clock.innerHTML = currentTime;
         
         if (hour == 12 && min == 34) {
 			//document.body.classList.add('eightthreeone');
@@ -227,13 +217,26 @@ $taco_image = $taco_images[array_rand($taco_images)];
             //document.getElementById('sunset_img').setAttribute('display','none');
         }
 
-        // if the day is Friday and the time is between 1:00pm and 2:30pm, show the taco notification
+        // if the day is Friday and the time is between 1:00pm and 1:59pm, show the taco notification
         if (time.getDay() == 5 && hour == 1 && min >= 0 && min <= 59 && am_pm == "PM") {
-            document.body.classList.add('taco');   
+            document.body.classList.add('taco');
+            // change time to be a countown to 2:00pm 
+            hour = 0;
+            min = 60 - min;
+            sec = 60 - sec;
         } else {
             document.body.classList.remove('taco');
         }
         
+        hour = hour < 10 ? "" + hour : hour;
+        min = min < 10 ? "0" + min : min;
+        sec = sec < 10 ? "0" + sec : sec;
+
+        let currentTime = hour + ":" + min + "<sup>:"+ sec + "</sup>" + am_pm;
+
+        var clock = document.getElementById("clock");
+        clock.innerHTML = currentTime;
+
         // https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot
 
         sunsetclock.innerHTML = "Sunset: " + sunsetHour + ":" + sunsetMinute + " PM";
