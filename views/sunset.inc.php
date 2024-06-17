@@ -21,7 +21,7 @@ $fourtwenty_images = array(
     'weed-wizard2.png',
     'weed-wizard3.png',
     'fourtwenty-background.jpg',
-    'fourtwenty-background-1.jpg',
+    'fourtwenty-background-1.png',
     'fourtwenty-background-2.png',
     'fourtwenty-background-3.png',
     'fourtwenty-background-4.png',
@@ -222,8 +222,8 @@ $taco_image = $taco_images[array_rand($taco_images)];
             document.body.classList.add('taco');
             // change time to be a countown to 2:00pm 
             hour = 0;
-            min = 60 - min;
-            sec = 60 - sec;
+            min = 59 - min;
+            sec = 59 - sec;
         } else {
             document.body.classList.remove('taco');
         }
