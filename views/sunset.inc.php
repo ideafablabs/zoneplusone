@@ -1,21 +1,62 @@
 <?php 
-/*
+
 define("IFLZPO_SUNSET_IMG_URL", IFLZPO_PLUGIN_URL . 'css/img/');
+define("IFLZPO_SUNSET_IMG_PATH", IFLZPO_PLUGIN_PATH . 'css/img/');
+define("IFLZPO_SUNSET_IMG_FILE", IFLZPO_SUNSET_IMG_PATH . 'sunset-images.txt');
 
-// get all of the images from the folder and select one at random
-$images = glob(IFLZPO_PLUGIN_PATH . 'css/img/*.png');
+// Prompt to generate a prompt for an image.
+$today = date('m/d');
+$prompt = 'Todays date is '.$today.'. Provide a concise description of an artistic representation of this day. This description will be used as a prompt to generate an image for an online calendar. The image should be symbolic of the month and day.';
+
+// if the image file does not exist, create it.
+if (!file_exists(IFLZPO_SUNSET_IMG_FILE)) {
+    $file = fopen(IFLZPO_SUNSET_IMG_FILE, 'w');
+    fclose($file);
+}
+
+// Reads the sunset image file and check that the last item is a date, if it is and its not today's date, then prompt ChatGPT for a new image prompt.
+// if the first item is today's date, and there is a blank url then then repeat the image prompt part.
+if (file_exists(IFLZPO_SUNSET_IMG_FILE)) {
+    
+    $lines = file(IFLZPO_SUNSET_IMG_FILE);
+    $lastLine = end($lines);
+    $lastLine = json_decode($lastLine, true);
+    $lastDate = $lastLine['date'];
+    
+    $lastImageUrl = $lastLine['imageUrl'];
+    $lastImagePrompt = $lastLine['imagePrompt'];
+    $lastTime = $lastLine['time'];
+
+    if ($lastDate == date('Y-m-d')) {
+        $imageUrl = $lastImageUrl;
+        $imagePrompt = $lastImagePrompt;
+
+        if ($imageUrl == '') {
+            $imageUrl = $this->generateImage($imagePrompt);
+        }
+    } else {
+        $imagePrompt = $this->promptChatGPT($prompt);
+        $imageUrl = $this->generateImage($imagePrompt);
+
+        $promptData = array(
+            'date' => date('Y-m-d'),
+            'time' => date('H:i:s'), 
+            'imageUrl' => $imageUrl,
+            'imagePrompt' => $imagePrompt
+        );
+        
+        // pr($promptData);
+        $logline = json_encode($promptData);
+        // echo $logline;
+        
+        // append the generated image info to the end of a file in the plugin directory
+        file_put_contents(IFLZPO_SUNSET_IMG_FILE, $logline . PHP_EOL, FILE_APPEND);
+        
+    }
+}
 
 
-$image = array_rand($images);
-pr($image);
-// strip everything before the last slash
-$image = substr($image, strrpos($image, '/'));
-
-
-// <img src="<?php echo IFLZPO_SUNSET_IMG_URL . $image; ?>" alt="" />
-*/
-
-// Choose an image from an array of images
+// Choose a 420 image from an array of images
 $fourtwenty_images = array(
     'weed-wizard1.png',
     'weed-wizard2.png',
@@ -41,8 +82,6 @@ $taco_images = array(
 $taco_image = $taco_images[array_rand($taco_images)];
 
 ?>
-
-
 
 <div id="clock" ></div>
 <div id="sunclock" ></div>
@@ -197,6 +236,18 @@ $taco_image = $taco_images[array_rand($taco_images)];
         } else {
 			document.body.classList.remove('eleveneleven');
         }
+
+        // make an api call to Dall-e 3 and generate an image with the prompt "sunset"
+
+    
+
+        // whatever the date is today, at the corresponding time (ex Feb. 6 = 2:06) show a unique image for that day and time.
+        if (time.getMonth() == hour && time.getDate() == min) {
+            document.body.classList.add('day-image');
+        } else {
+            document.body.classList.remove('day-image');
+        }
+
 
         // if current time is 50 minutes before or 30 minutes after sunset, show the sunset notification
         if (currentTimeInMinutes >= sunsetTimeInMinutes - 120 && currentTimeInMinutes <= sunsetTimeInMinutes + 30) {

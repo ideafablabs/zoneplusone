@@ -111,6 +111,88 @@ Class IFLZonePlusOne
  	 	die();
 	}
 
+	// Prompt ChatGPT
+	public function promptChatGPT($prompt) {
+		$apiKey = OPENAI_API_KEY;
+		$apiUrl = 'https://api.openai.com/v1/chat/completions'; // Replace with the actual ChatGPT 4 API URL if different
+	
+		$requestData = [        
+			'messages' => array(
+				array(
+					'role' => 'system',
+					'content' => 'You are a numerology expert.'
+				),
+				array(
+					'role' => 'user',
+					'content' => $prompt
+				)
+			),
+			'model' => 'gpt-4o',
+			'max_tokens' => 150, // Adjust the number of tokens as needed
+			'temperature' => 0.7, // Adjust the temperature as needed
+		];
+	
+		$ch = curl_init($apiUrl);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, [
+			'Content-Type: application/json',
+			'Authorization: Bearer ' . $apiKey
+		]);
+	
+		$response = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	
+		if ($httpCode == 200) {
+			$responseData = json_decode($response, true);
+			$reply = $responseData['choices'][0]['message']['content'];
+			// echo $reply;
+			return $reply;
+			
+		} else {
+			return 'Error prompting ChatGPT: ' . $response;
+		}
+	
+		curl_close($ch);
+	}
+
+	public function generateImage($prompt) {
+		$apiKey = OPENAI_API_KEY; // Replace with your actual API key
+		$apiUrl = 'https://api.openai.com/v1/images/generations'; // Replace with the actual DALL-E 3 API URL if different
+	
+		$requestData = [
+			'prompt' => $prompt,
+			'model' => 'dall-e-3',
+			'n' => 1, // Number of images to generate
+			'size' => '1792x1024' // Image size
+			
+		];
+	
+		$ch = curl_init($apiUrl);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, [
+			'Content-Type: application/json',
+			'Authorization: Bearer ' . $apiKey
+		]);
+	
+		$response = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	
+		if ($httpCode == 200) {
+			$responseData = json_decode($response, true);
+			$imageUrl = $responseData['data'][0]['url'];
+			return $imageUrl;
+		} else {
+			return 'Error generating image: ' . $response;
+		}
+	
+		curl_close($ch);
+	}
+
+
 	public function get_list_of_active_membermouse_users() {
 			
 		global $wpdb;
