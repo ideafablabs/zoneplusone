@@ -38,6 +38,12 @@ define("IFLZPO_LOGFILE", IFLZPO_LOGFOLDER . date('Y-m') . '-log.csv');
 define("IFLZPO_PLUGIN_URL", plugins_url( '/' , __FILE__ ));
 define("IFLZPO_VIEWS_URL", plugins_url( 'views/' , __FILE__ ));
 
+// Sunset Paths
+define("IFLZPO_SUNSET_IMG_URL", IFLZPO_PLUGIN_URL . 'css/img/');
+define("IFLZPO_SUNSET_IMG_PATH", IFLZPO_PLUGIN_PATH . 'css/img/');
+define("IFLZPO_SUNSET_IMG_FILE", IFLZPO_SUNSET_IMG_PATH . 'sunset-images.txt');
+
+
 
 $IFLZonePlusOne = new IFLZonePlusOne;
 $IFLZonePlusOne->run();
