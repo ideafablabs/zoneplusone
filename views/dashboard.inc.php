@@ -20,8 +20,40 @@
 	
 <?php include 'admin-header.inc.php'  ?>
 
-
+<h2>Sunset Images</h2>
 <?php 
+
+if (file_exists(IFLZPO_SUNSET_IMG_FILE)) {
+    
+	// get an array of all of the lines in the file (which are json) and display a table of them with links to the images:
+	$lines = file(IFLZPO_SUNSET_IMG_FILE);
+	$lines = array_reverse($lines);
+
+	$table = '<table>';
+	$table .= '<tr><th>Date</th><th>Time</th><th>Image</th><th>Prompt</th></tr>';
+	foreach ($lines as $line) {
+		$line = json_decode($line, true);
+		$table .= '<tr>';
+		$table .= '<td>' . $line['date'] . '</td>';
+		$table .= '<td>' . $line['time'] . '</td>';
+		$table .= '<td><a href="' . $line['imageUrl'] . '" target="_blank"><img src="' . $line['imageUrl'] . '" width="100" height="100"></a></td>';	
+		$table .= '<td>' . $line['imagePrompt'] . '</td>';
+		$table .= '</tr>';
+	}
+	$table .= '</table>';
+	echo $table;
+	
+
+    // $lines = file(IFLZPO_SUNSET_IMG_FILE);
+	// $lastLine = end($lines);
+    // $lastLine = json_decode($lastLine, true);
+    // $lastDate = $lastLine['date'];
+    
+    // $lastImageUrl = $lastLine['imageUrl'];
+    // $lastImagePrompt = $lastLine['imagePrompt'];
+    // $lastTime = $lastLine['time'];
+
+}
 
 $zonedata = $this->get_zone_plus_ones_array_for_dashboard();
 		// pr($zonedata);
