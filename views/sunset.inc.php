@@ -1,8 +1,5 @@
 <?php 
 
-define("IFLZPO_SUNSET_IMG_URL", IFLZPO_PLUGIN_URL . 'css/img/');
-define("IFLZPO_SUNSET_IMG_PATH", IFLZPO_PLUGIN_PATH . 'css/img/');
-define("IFLZPO_SUNSET_IMG_FILE", IFLZPO_SUNSET_IMG_PATH . 'sunset-images.txt');
 
 // Prompt to generate a prompt for an image.
 $today = date('m/d');
