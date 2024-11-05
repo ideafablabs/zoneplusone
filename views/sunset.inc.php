@@ -164,89 +164,9 @@ $taco_image = $taco_images[array_rand($taco_images)];
             am_pm = "AM";
         }
 
-        // hour = 12; min = 34;
-        // hour = 1; min = 24;
-        // hour = 4; min = 04;
-        // hour = 4; min = 20;
-        // hour = 6; min = 39;
-        // hour = 8; min = 8;
-       	// hour = 8; min = 31;
-       	// hour = 11; min = 11;
+
         
-		// force sunset:  
-        //currentTimeInMinutes = sunsetTimeInMinutes - 4;
-
-        if (hour == 4 && min == 21 && sec <= 9) {
-            hour = 4; min = 20;sec = 60+Number(sec);
-        }
-        
-        if (hour == 12 && min == 34) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','onetwothreefour');
-        } else {
-			document.body.classList.remove('onetwothreefour');
-        }
-
-        if (hour == 4 && min == 04) {
-            document.body.setAttribute('class','fourohfour');
-        } else {
-            //document.body.setAttribute('class','');
-			document.body.classList.remove('fourohfour');
-        }
-
-        if (hour == 4 && min == 20) {
-            document.body.setAttribute('class','fourtwenty');
-        } else {
-            //document.body.setAttribute('class','');
-			document.body.classList.remove('fourtwenty');
-        }
-		
-        if (hour == 6 && min == 39) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','sixthreenine');
-        } else {
-			document.body.classList.remove('sixthreenine');
-        }
-
-        if (hour == 8 && min == 31) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','eightthreeone');
-        } else {
-			document.body.classList.remove('eightthreeone');
-        }
-
-        if (hour == 8 && min == 08) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','eightoheight');
-        } else {
-			document.body.classList.remove('eightoheight');
-        }
-        if (hour == 9 && min == 09) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','nineohnine');
-        } else {
-			document.body.classList.remove('nineohnine');
-        }
-        if (hour == 11 && min == 11) {
-			//document.body.classList.add('eightthreeone');
-            document.body.setAttribute('class','eleveneleven');
-        } else {
-			document.body.classList.remove('eleveneleven');
-        }
-
-        // make an api call to Dall-e 3 and generate an image with the prompt "sunset"
-
-    
-
-        // whatever the date is today, at the corresponding time (ex Feb. 6 = 2:06) show a unique image for that day and time.
-        if (time.getMonth() == hour && time.getDate() == min) {
-            document.body.classList.add('day-image');
-        } else {
-            document.body.classList.remove('day-image');
-        }
-
-
-        // if current time is 50 minutes before or 30 minutes after sunset, show the sunset notification
+        // if current time is 120 minutes before or 30 minutes after sunset, show the sunset notification
         if (currentTimeInMinutes >= sunsetTimeInMinutes - 120 && currentTimeInMinutes <= sunsetTimeInMinutes + 30) {
             sunset_img.style.display = "block";
             document.body.classList.add('sunset');
@@ -275,6 +195,99 @@ $taco_image = $taco_images[array_rand($taco_images)];
         } else {
             document.body.classList.remove('taco');
         }
+
+        // force times for testing...
+        // hour = 12; min = 34;
+        // hour = 1; min = 24;
+        // hour = 4; min = 04;
+        // hour = 4; min = 20;
+        // hour = 6; min = 39;
+        // hour = 8; min = 8;
+       	// hour = 8; min = 31;
+       	// hour = 11; min = 11;
+        
+		// force sunset:  
+        //currentTimeInMinutes = sunsetTimeInMinutes - 4;
+
+
+
+        // Alter the spacetime continuum.
+        if (hour == 4 && min == 21 && sec <= 9) {
+            hour = 4; min = 20;sec = 60+Number(sec);
+        }
+        
+        if (hour == 12 && min == 34) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','onetwothreefour');
+        } else {
+			document.body.classList.remove('onetwothreefour');
+        }
+
+        if (hour == 4 && min == 04) {
+            document.body.setAttribute('class','fourohfour');
+            sunset_img.style.display = 'none';
+        } else {
+            //document.body.setAttribute('class','');
+			document.body.classList.remove('fourohfour');
+        }
+
+        if (hour == 4 && min == 20) {
+            document.body.setAttribute('class','fourtwenty');
+            sunset_img.style.display = 'none';
+        } else {
+            //document.body.setAttribute('class','');
+			document.body.classList.remove('fourtwenty');
+        }
+		
+        if (hour == 6 && min == 39) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','sixthreenine');
+            sunset_img.style.display = 'none';
+        } else {
+			document.body.classList.remove('sixthreenine');
+        }
+        if (hour == 8 && min == 08) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','eightoheight');
+            sunset_img.style.display = 'none';
+        } else {
+			document.body.classList.remove('eightoheight');
+        }
+        
+        if (hour == 8 && min == 31) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','eightthreeone');
+            sunset_img.style.display = 'none';
+        } else {
+			document.body.classList.remove('eightthreeone');
+        }
+        if (hour == 9 && min == 09) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','nineohnine');
+            sunset_img.style.display = 'none';
+        } else {
+			document.body.classList.remove('nineohnine');
+        }
+        if (hour == 11 && min == 11) {
+			//document.body.classList.add('eightthreeone');
+            document.body.setAttribute('class','eleveneleven');
+        } else {
+			document.body.classList.remove('eleveneleven');
+        }
+
+
+        // make an api call to Dall-e 3 and generate an image with the prompt "sunset"
+
+    
+
+        // whatever the date is today, at the corresponding time (ex Feb. 6 = 2:06) show a unique image for that day and time.
+        if (time.getMonth() == hour && time.getDate() == min) {
+            document.body.classList.add('day-image');
+        } else {
+            document.body.classList.remove('day-image');
+        }
+
+
         
         hour = hour < 10 ? "" + hour : hour;
         min = min < 10 ? "0" + min : min;
