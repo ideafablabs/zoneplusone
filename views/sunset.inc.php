@@ -196,6 +196,21 @@ $taco_image = $taco_images[array_rand($taco_images)];
             document.body.classList.remove('taco');
         }
 
+        // if the day is Thursday and the time is between 2:00pm and 6:00pm, show the trash notification
+        if (time.getDay() == 4 && hour >= 2 && hour <= 6 && min >= 0 && min <= 59 && am_pm == "PM") {
+            document.body.classList.add('trash');
+            // // change time to be a countown to 2:00pm 
+            // hour = 0;
+            // min = 59 - min;
+            // sec = 59 - sec;
+            // add an image below the clock div
+            let trash_img = document.createElement('img');
+            trash_img.src = '<?php echo IFLZPO_PLUGIN_URL . 'css/img/trash-background.png';?>';
+            trash_img.style.position = 'fixed';
+        } else {
+            document.body.classList.remove('trash');
+        }
+
         // force times for testing...
         // hour = 12; min = 34;
         // hour = 1; min = 24;
@@ -403,6 +418,9 @@ $taco_image = $taco_images[array_rand($taco_images)];
         }
         body.taco {
             background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/'. $taco_image;?>');
+        }
+        body.trash {
+            background-image: url('<?php echo IFLZPO_PLUGIN_URL . 'css/img/trash-background.png';?>');
         }
         html,body {
             height:inherit;
