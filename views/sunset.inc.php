@@ -170,7 +170,7 @@ $taco_image = $taco_images[array_rand($taco_images)];
         if (currentTimeInMinutes >= sunsetTimeInMinutes - 120 && currentTimeInMinutes <= sunsetTimeInMinutes + 30) {
             sunset_img.style.display = "block";
             document.body.classList.add('sunset');
-            let sunset_img_src = 'https://b9.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
+            let sunset_img_src = 'https://b15.hdrelay.com/camera/6cdda368-c0b1-4eab-8168-1d21f4881db6/snapshot'
             
             // if currentTimeinSeconds is within 10 seconds of the next minute, update the image
             if (sec % 10 == 0) {
